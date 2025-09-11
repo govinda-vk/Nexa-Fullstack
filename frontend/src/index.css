@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* Add this class to apply the focus animation */
+.brutalist-input:focus {
+  animation: focus-pulse 4s cubic-bezier(0.25, 0.8, 0.25, 1) infinite;
+}
+
+/* Optional: Add a smooth caret color transition for better UX */
+.brutalist-input {
+  caret-color: #4a90e2;
+}

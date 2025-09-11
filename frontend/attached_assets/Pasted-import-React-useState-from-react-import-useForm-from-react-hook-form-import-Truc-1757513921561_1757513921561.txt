@@ -1,0 +1,324 @@
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { 
+  Truck, 
+  Plus, 
+  Package, 
+  Clock, 
+  CheckCircle, 
+  AlertTriangle,
+  TrendingUp,
+  Calendar,
+  Zap
+} from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+
+interface SupplyRecord {
+  id: number;
+  supplierName: string;
+  product: string;
+  quantity: number;
+  deliveryDate: string;
+  status: 'On-Time' | 'Delayed' | 'Pending';
+}
+
+const SupplyChainAutomation: React.FC = () => {
+  const [supplies, setSupplies] = useState<SupplyRecord[]>([
+    { id: 1, supplierName: 'TechComponents Inc', product: 'Laptop Computers', quantity: 25, deliveryDate: '2024-01-20', status: 'On-Time' },
+    { id: 2, supplierName: 'Office Supplies Co', product: 'Office Furniture', quantity: 15, deliveryDate: '2024-01-25', status: 'Pending' },
+    { id: 3, supplierName: 'Global Materials', product: 'Raw Materials', quantity: 100, deliveryDate: '2024-01-15', status: 'Delayed' },
+    { id: 4, supplierName: 'Express Logistics', product: 'Packaging Materials', quantity: 500, deliveryDate: '2024-01-30', status: 'On-Time' },
+    { id: 5, supplierName: 'Industrial Parts Ltd', product: 'Machine Components', quantity: 50, deliveryDate: '2024-02-05', status: 'Pending' },
+  ]);
+
+  const { register, handleSubmit, reset } = useForm();
+
+  const onSubmit = (data: any) => {
+    const newSupply: SupplyRecord = {
+      id: supplies.length + 1,
+      supplierName: data.supplierName,
+      product: data.product,
+      quantity: parseInt(data.quantity),
+      deliveryDate: data.deliveryDate,
+      status: data.status,
+    };
+    setSupplies([newSupply, ...supplies]);
+    reset();
+  };
+
+  const statusCounts = supplies.reduce((acc, supply) => {
+    acc[supply.status] = (acc[supply.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const pieData = [
+    { name: 'On-Time', value: statusCounts['On-Time'] || 0, color: '#10b981' },
+    { name: 'Delayed', value: statusCounts['Delayed'] || 0, color: '#ef4444' },
+    { name: 'Pending', value: statusCounts['Pending'] || 0, color: '#f59e0b' },
+  ];
+
+  const supplierData = supplies.reduce((acc, supply) => {
+    const existing = acc.find(item => item.supplier === supply.supplierName);
+    if (existing) {
+      existing.orders += 1;
+    } else {
+      acc.push({ supplier: supply.supplierName, orders: 1 });
+    }
+    return acc;
+  }, [] as { supplier: string; orders: number }[]);
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'On-Time':
+        return <CheckCircle size={16} className="text-green-600" />;
+      case 'Delayed':
+        return <AlertTriangle size={16} className="text-red-600" />;
+      case 'Pending':
+        return <Clock size={16} className="text-yellow-600" />;
+      default:
+        return <Clock size={16} className="text-gray-600" />;
+    }
+  };
+
+  const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case 'On-Time':
+        return 'bg-green-100 text-green-800';
+      case 'Delayed':
+        return 'bg-red-100 text-red-800';
+      case 'Pending':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const onTimePercentage = ((statusCounts['On-Time'] || 0) / supplies.length) * 100;
+
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900">Supply Chain Automation</h2>
+          <p className="text-gray-600 mt-1">Monitor suppliers, track deliveries, and optimize your supply chain</p>
+        </div>
+        <div className="bg-orange-100 p-3 rounded-xl">
+          <Truck size={24} className="text-orange-600" />
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Orders</p>
+              <p className="text-2xl font-bold text-blue-600">{supplies.length}</p>
+            </div>
+            <Package className="text-blue-500" size={24} />
+          </div>
+          <p className="text-xs text-gray-500 mt-2">Active supply orders</p>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">On-Time Rate</p>
+              <p className="text-2xl font-bold text-green-600">{Math.round(onTimePercentage)}%</p>
+            </div>
+            <CheckCircle className="text-green-500" size={24} />
+          </div>
+          <p className="text-xs text-gray-500 mt-2">Delivery performance</p>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Delayed Orders</p>
+              <p className="text-2xl font-bold text-red-600">{statusCounts['Delayed'] || 0}</p>
+            </div>
+            <AlertTriangle className="text-red-500" size={24} />
+          </div>
+          <p className="text-xs text-gray-500 mt-2">Need attention</p>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Active Suppliers</p>
+              <p className="text-2xl font-bold text-purple-600">{supplierData.length}</p>
+            </div>
+            <Truck className="text-purple-500" size={24} />
+          </div>
+          <p className="text-xs text-gray-500 mt-2">Partner network</p>
+        </div>
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Delivery Status Distribution</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <PieChart>
+              <Pie
+                data={pieData}
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={100}
+                paddingAngle={5}
+                dataKey="value"
+              >
+                {pieData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="flex justify-center space-x-4 mt-4">
+            {pieData.map((entry, index) => (
+              <div key={index} className="flex items-center">
+                <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: entry.color }}></div>
+                <span className="text-sm text-gray-600">{entry.name} ({entry.value})</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Orders by Supplier</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={supplierData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="supplier" 
+                angle={-45}
+                textAnchor="end"
+                height={80}
+                fontSize={12}
+              />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="orders" fill="#3b82f6" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Add Supply Record Form */}
+        <div className="lg:col-span-1">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">Add Supply Order</h3>
+              <Plus className="text-gray-400" size={20} />
+            </div>
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <input
+                {...register('supplierName', { required: true })}
+                placeholder="Supplier Name"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+              <input
+                {...register('product', { required: true })}
+                placeholder="Product"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+              <input
+                {...register('quantity', { required: true })}
+                type="number"
+                placeholder="Quantity"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+              <input
+                {...register('deliveryDate', { required: true })}
+                type="date"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+              <select
+                {...register('status', { required: true })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
+                <option value="">Select Status</option>
+                <option value="On-Time">On-Time</option>
+                <option value="Delayed">Delayed</option>
+                <option value="Pending">Pending</option>
+              </select>
+              <button
+                type="submit"
+                className="w-full bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 transition-colors flex items-center justify-center"
+              >
+                <Plus size={16} className="mr-2" />
+                Add Supply Order
+              </button>
+            </form>
+          </div>
+
+          {/* AI Optimization Tip */}
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 rounded-xl shadow-sm mt-6 text-white">
+            <div className="flex items-center mb-3">
+              <Zap size={20} className="mr-2" />
+              <h3 className="font-semibold">AI Optimization Tip</h3>
+            </div>
+            <p className="text-sm text-blue-100">
+              Based on your data, consider diversifying suppliers for critical components. 
+              Your current dependency on single suppliers for key items poses a delivery risk.
+            </p>
+          </div>
+        </div>
+
+        {/* Supply Records Table */}
+        <div className="lg:col-span-2">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">Supply Chain Records</h3>
+              <Calendar className="text-gray-400" size={20} />
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-4 font-medium text-gray-900">Supplier</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900">Product</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900">Qty</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900">Delivery</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {supplies.map((supply) => (
+                    <tr key={supply.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-3 px-4">
+                        <p className="font-medium text-gray-900">{supply.supplierName}</p>
+                      </td>
+                      <td className="py-3 px-4">
+                        <p className="text-gray-600">{supply.product}</p>
+                      </td>
+                      <td className="py-3 px-4">
+                        <p className="text-gray-900">{supply.quantity}</p>
+                      </td>
+                      <td className="py-3 px-4">
+                        <p className="text-gray-600">{supply.deliveryDate}</p>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(supply.status)}`}>
+                          {getStatusIcon(supply.status)}
+                          <span className="ml-1">{supply.status}</span>
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SupplyChainAutomation;

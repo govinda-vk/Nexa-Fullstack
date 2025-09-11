@@ -1,0 +1,909 @@
+{
+  "info": {
+    "name": "ASKit Backend API - Actual Implementation",
+    "description": "Complete API collection based on actual codebase analysis for ASKit backend - A ChatGPT-like widget for websites with RAG (Retrieval Augmented Generation)",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string",
+      "description": "Base URL for the API server"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string",
+      "description": "JWT authentication token"
+    },
+    {
+      "key": "widgetApiKey",
+      "value": "",
+      "type": "string",
+      "description": "Widget API key for widget endpoints"
+    },
+    {
+      "key": "websiteId",
+      "value": "",
+      "type": "string",
+      "description": "Website ID for testing"
+    },
+    {
+      "key": "jobId",
+      "value": "",
+      "type": "string",
+      "description": "Job ID for crawling operations"
+    },
+    {
+      "key": "widgetId",
+      "value": "",
+      "type": "string",
+      "description": "Widget ID for widget operations"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "description": "User authentication endpoints",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"SecurePassword123!\",\n  \"name\": \"John Doe\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.token) {",
+                  "        pm.collectionVariables.set('token', response.token);",
+                  "        console.log('Token saved:', response.token);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"SecurePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Updated Doe\",\n  \"avatar\": \"https://example.com/avatar.jpg\",\n  \"preferences\": {\n    \"theme\": \"dark\",\n    \"notifications\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"SecurePassword123!\",\n  \"newPassword\": \"NewSecurePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "change-password"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Google OAuth Login",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "google"]
+            },
+            "description": "Redirects to Google OAuth consent screen"
+          },
+          "response": []
+        },
+        {
+          "name": "Google OAuth Callback",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google/callback?code=AUTH_CODE&state=STATE",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "google", "callback"],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "AUTH_CODE",
+                  "description": "Google OAuth authorization code"
+                },
+                {
+                  "key": "state",
+                  "value": "STATE",
+                  "description": "OAuth state parameter"
+                }
+              ]
+            },
+            "description": "Google OAuth callback endpoint"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "User Management",
+      "description": "User website and profile management",
+      "item": [
+        {
+          "name": "Get User Websites",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.websites && response.websites.length > 0) {",
+                  "        pm.collectionVariables.set('websiteId', response.websites[0]._id);",
+                  "        console.log('Website ID saved:', response.websites[0]._id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/websites?status=completed&limit=10&page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "websites"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "completed",
+                  "description": "Filter by status: pending, crawling, completed, failed"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of results per page"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Website Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/websites/{{websiteId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "websites", "{{websiteId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Website to Crawl",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://example.com\",\n  \"title\": \"Example Website\",\n  \"description\": \"A sample website for testing\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/websites",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "websites"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Website",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Website Title\",\n  \"description\": \"Updated description\",\n  \"status\": \"completed\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/websites/{{websiteId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "websites", "{{websiteId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Website",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/websites/{{websiteId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "websites", "{{websiteId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "stats"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Website Crawling & Ingestion",
+      "description": "Website crawling and content ingestion endpoints",
+      "item": [
+        {
+          "name": "Start Website Crawl",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 202) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.jobId) {",
+                  "        pm.collectionVariables.set('jobId', response.jobId);",
+                  "        console.log('Job ID saved:', response.jobId);",
+                  "    }",
+                  "    if (response.websiteId) {",
+                  "        pm.collectionVariables.set('websiteId', response.websiteId);",
+                  "        console.log('Website ID saved:', response.websiteId);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://example.com\",\n  \"maxPages\": 50,\n  \"respectRobots\": true,\n  \"includeImages\": false,\n  \"excludePatterns\": [\"/admin/\", \"/private/\"],\n  \"waitTime\": 1000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ingest",
+              "host": ["{{baseUrl}}"],
+              "path": ["ingest"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Crawl Job Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/job-status/{{jobId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["job-status", "{{jobId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Job Status Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jobId\": \"{{jobId}}\",\n  \"status\": \"completed\",\n  \"progress\": 100,\n  \"pagesCrawled\": 25,\n  \"chunksProcessed\": 150,\n  \"results\": {\n    \"success\": true,\n    \"totalPages\": 25,\n    \"totalChunks\": 150\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/webhook/job-status",
+              "host": ["{{baseUrl}}"],
+              "path": ["webhook", "job-status"]
+            },
+            "description": "Webhook endpoint for job status updates"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Queue Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/queue-stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["queue-stats"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Clear Queue",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/queue/clear",
+              "host": ["{{baseUrl}}"],
+              "path": ["queue", "clear"]
+            },
+            "description": "Clear all jobs from the queue"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "RAG Query System",
+      "description": "Question answering and search endpoints",
+      "item": [
+        {
+          "name": "Query Knowledge Base",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"What is the main purpose of this website?\",\n  \"website\": \"example.com\",\n  \"topK\": 5,\n  \"includeMetadata\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/query",
+              "host": ["{{baseUrl}}"],
+              "path": ["query"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Widget Management",
+      "description": "Widget configuration and management endpoints",
+      "item": [
+        {
+          "name": "Get Widget Configuration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.widget && response.widget.apiKey) {",
+                  "        pm.collectionVariables.set('widgetApiKey', response.widget.apiKey);",
+                  "        console.log('Widget API key saved:', response.widget.apiKey);",
+                  "    }",
+                  "    if (response.widget && response.widget.widgetId) {",
+                  "        pm.collectionVariables.set('widgetId', response.widget.widgetId);",
+                  "        console.log('Widget ID saved:', response.widget.widgetId);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/widget/website/{{websiteId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["widget", "website", "{{websiteId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Widget Configuration",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": true,\n  \"config\": {\n    \"theme\": \"light\",\n    \"primaryColor\": \"#007bff\",\n    \"position\": \"bottom-right\",\n    \"size\": \"medium\",\n    \"autoOpen\": false,\n    \"showWelcomeMessage\": true,\n    \"welcomeMessage\": \"Hello! How can I help you today?\",\n    \"placeholder\": \"Type your message...\",\n    \"title\": \"NEXA Assistant\",\n    \"subtitle\": \"Ask me anything about this website\",\n    \"avatar\": \"https://example.com/avatar.png\",\n    \"showPoweredBy\": true,\n    \"maxMessages\": 50,\n    \"sessionTimeout\": 1800,\n    \"allowFileUploads\": false,\n    \"allowFeedback\": true\n  },\n  \"rateLimits\": {\n    \"messagesPerMinute\": 10,\n    \"messagesPerHour\": 100\n  },\n  \"allowedDomains\": [\"example.com\", \"www.example.com\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/widget/website/{{websiteId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["widget", "website", "{{websiteId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Widget for Website",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/widget/website/{{websiteId}}/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["widget", "website", "{{websiteId}}", "create"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Regenerate Widget API Key",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/widget/website/{{websiteId}}/regenerate-key",
+              "host": ["{{baseUrl}}"],
+              "path": ["widget", "website", "{{websiteId}}", "regenerate-key"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Widget Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/widget/website/{{websiteId}}/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["widget", "website", "{{websiteId}}", "stats"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Test Widget Functionality",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Hello, this is a test message for the widget!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/widget/website/{{websiteId}}/test",
+              "host": ["{{baseUrl}}"],
+              "path": ["widget", "website", "{{websiteId}}", "test"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Widget Public API",
+      "description": "Public API endpoints used by embedded widgets",
+      "auth": {
+        "type": "noauth"
+      },
+      "item": [
+        {
+          "name": "Widget Chat",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Widget-API-Key",
+                "value": "{{widgetApiKey}}",
+                "description": "Widget API key for authentication"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"What is this website about?\",\n  \"sessionId\": \"session_12345\",\n  \"websiteUrl\": \"https://example.com\",\n  \"timestamp\": \"2024-01-15T10:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/widget-api/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["widget-api", "chat"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Widget Config",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Widget-API-Key",
+                "value": "{{widgetApiKey}}",
+                "description": "Widget API key for authentication"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/widget-api/config",
+              "host": ["{{baseUrl}}"],
+              "path": ["widget-api", "config"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Widget Statistics Ping",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Widget-API-Key",
+                "value": "{{widgetApiKey}}",
+                "description": "Widget API key for authentication"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"session_12345\",\n  \"action\": \"widget_opened\",\n  \"timestamp\": \"2024-01-15T10:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/widget-api/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["widget-api", "stats"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Widget Feedback",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Widget-API-Key",
+                "value": "{{widgetApiKey}}",
+                "description": "Widget API key for authentication"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Very helpful assistant!\",\n  \"sessionId\": \"session_12345\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/widget-api/feedback",
+              "host": ["{{baseUrl}}"],
+              "path": ["widget-api", "feedback"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Widget Health Check",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Widget-API-Key",
+                "value": "{{widgetApiKey}}",
+                "description": "Widget API key for authentication"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/widget-api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["widget-api", "health"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Server Endpoints (Direct)",
+      "description": "Direct server endpoints from main server.js",
+      "item": [
+        {
+          "name": "Get All Websites (Server)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/websites?status=completed&limit=10&page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["websites"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "completed",
+                  "description": "Filter by status"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Results per page"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Website Details (Server)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/websites/{{websiteId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["websites", "{{websiteId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Website (Server)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/websites/{{websiteId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["websites", "{{websiteId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Widget Demo Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/widget-demo",
+              "host": ["{{baseUrl}}"],
+              "path": ["widget-demo"]
+            },
+            "description": "Serves the widget demo HTML page"
+          },
+          "response": []
+        },
+        {
+          "name": "Widget Test Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/widget-test",
+              "host": ["{{baseUrl}}"],
+              "path": ["widget-test"]
+            },
+            "description": "Serves the live widget test HTML page"
+          },
+          "response": []
+        },
+        {
+          "name": "Widget Script",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/widget/{{widgetId}}/script.js",
+              "host": ["{{baseUrl}}"],
+              "path": ["widget", "{{widgetId}}", "script.js"]
+            },
+            "description": "Serves the JavaScript widget script for embedding"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-set authorization header if token exists",
+          "const token = pm.collectionVariables.get('token');",
+          "if (token && !pm.request.headers.get('Authorization')) {",
+          "    pm.request.headers.add({",
+          "        key: 'Authorization',",
+          "        value: `Bearer ${token}`",
+          "    });",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test to log response time and status",
+          "pm.test('Response time is acceptable', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "// Log basic response info for debugging",
+          "console.log(`${pm.request.method} ${pm.request.url.toString()} - ${pm.response.status} (${pm.response.responseTime}ms)`);",
+          "",
+          "// Check for common error responses",
+          "if (pm.response.code >= 400) {",
+          "    console.log('Error Response:', pm.response.text());",
+          "}"
+        ]
+      }
+    }
+  ]
+}

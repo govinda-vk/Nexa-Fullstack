@@ -1,0 +1,302 @@
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { 
+  DollarSign, 
+  TrendingUp, 
+  TrendingDown, 
+  Plus, 
+  Calendar,
+  Receipt,
+  Users,
+  AlertCircle,
+  CheckCircle,
+  Clock
+} from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+
+interface Expense {
+  id: number;
+  name: string;
+  category: string;
+  amount: number;
+  date: string;
+}
+
+interface Invoice {
+  id: number;
+  clientName: string;
+  amount: number;
+  dueDate: string;
+  status: 'Paid' | 'Unpaid';
+}
+
+const CashFlowAssistant: React.FC = () => {
+  const [expenses, setExpenses] = useState<Expense[]>([
+    { id: 1, name: 'Office Supplies', category: 'Office', amount: 450, date: '2024-01-15' },
+    { id: 2, name: 'Software License', category: 'Technology', amount: 299, date: '2024-01-12' },
+    { id: 3, name: 'Marketing Campaign', category: 'Marketing', amount: 1200, date: '2024-01-10' },
+    { id: 4, name: 'Utilities', category: 'Office', amount: 320, date: '2024-01-08' },
+  ]);
+
+  const [invoices, setInvoices] = useState<Invoice[]>([
+    { id: 1, clientName: 'ABC Corporation', amount: 5500, dueDate: '2024-01-25', status: 'Paid' },
+    { id: 2, clientName: 'XYZ Industries', amount: 3200, dueDate: '2024-01-30', status: 'Unpaid' },
+    { id: 3, clientName: 'Tech Solutions Ltd', amount: 7800, dueDate: '2024-02-05', status: 'Unpaid' },
+    { id: 4, clientName: 'Global Enterprises', amount: 4100, dueDate: '2024-02-10', status: 'Paid' },
+  ]);
+
+  const { register: registerExpense, handleSubmit: handleExpenseSubmit, reset: resetExpense } = useForm();
+  const { register: registerInvoice, handleSubmit: handleInvoiceSubmit, reset: resetInvoice } = useForm();
+
+  const onExpenseSubmit = (data: any) => {
+    const newExpense: Expense = {
+      id: expenses.length + 1,
+      name: data.expenseName,
+      category: data.category,
+      amount: parseFloat(data.amount),
+      date: data.date,
+    };
+    setExpenses([newExpense, ...expenses]);
+    resetExpense();
+  };
+
+  const onInvoiceSubmit = (data: any) => {
+    const newInvoice: Invoice = {
+      id: invoices.length + 1,
+      clientName: data.clientName,
+      amount: parseFloat(data.amount),
+      dueDate: data.dueDate,
+      status: data.status,
+    };
+    setInvoices([newInvoice, ...invoices]);
+    resetInvoice();
+  };
+
+  const totalIncome = invoices.filter(inv => inv.status === 'Paid').reduce((sum, inv) => sum + inv.amount, 0);
+  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+  const netCash = totalIncome - totalExpenses;
+  const cashHealthScore = Math.max(0, Math.min(100, ((netCash / totalIncome) * 100) || 0));
+
+  const chartData = [
+    { month: 'Dec', income: 18500, expenses: 12200 },
+    { month: 'Jan', income: totalIncome, expenses: totalExpenses },
+    { month: 'Feb', income: 22000, expenses: 15800 },
+    { month: 'Mar', income: 25600, expenses: 17200 },
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900">Cash Flow Assistant</h2>
+          <p className="text-gray-600 mt-1">Track expenses, manage invoices, and monitor your financial health</p>
+        </div>
+        <div className="bg-blue-100 p-3 rounded-xl">
+          <DollarSign size={24} className="text-blue-600" />
+        </div>
+      </div>
+
+      {/* Cash Flow Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Income</p>
+              <p className="text-2xl font-bold text-green-600">${totalIncome.toLocaleString()}</p>
+            </div>
+            <TrendingUp className="text-green-500" size={24} />
+          </div>
+          <p className="text-xs text-gray-500 mt-2">From paid invoices</p>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Expenses</p>
+              <p className="text-2xl font-bold text-red-600">${totalExpenses.toLocaleString()}</p>
+            </div>
+            <TrendingDown className="text-red-500" size={24} />
+          </div>
+          <p className="text-xs text-gray-500 mt-2">This month</p>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Net Cash Flow</p>
+              <p className={`text-2xl font-bold ${netCash >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                ${netCash.toLocaleString()}
+              </p>
+            </div>
+            <DollarSign className={netCash >= 0 ? 'text-green-500' : 'text-red-500'} size={24} />
+          </div>
+          <p className="text-xs text-gray-500 mt-2">Current balance</p>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Health Score</p>
+              <p className="text-2xl font-bold text-blue-600">{Math.round(cashHealthScore)}%</p>
+            </div>
+            <AlertCircle className="text-blue-500" size={24} />
+          </div>
+          <div className="mt-2 bg-gray-200 rounded-full h-2">
+            <div 
+              className={`h-2 rounded-full ${cashHealthScore >= 70 ? 'bg-green-500' : cashHealthScore >= 40 ? 'bg-yellow-500' : 'bg-red-500'}`}
+              style={{ width: `${cashHealthScore}%` }}
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Charts */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Cash Flow Trend</h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="month" />
+            <YAxis />
+            <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, '']} />
+            <Bar dataKey="income" fill="#10b981" name="Income" />
+            <Bar dataKey="expenses" fill="#ef4444" name="Expenses" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Expense Tracking */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">Expense Tracking</h3>
+            <Receipt className="text-gray-400" size={20} />
+          </div>
+          
+          <form onSubmit={handleExpenseSubmit(onExpenseSubmit)} className="space-y-4 mb-6">
+            <div className="grid grid-cols-2 gap-4">
+              <input
+                {...registerExpense('expenseName', { required: true })}
+                placeholder="Expense Name"
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <select
+                {...registerExpense('category', { required: true })}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Category</option>
+                <option value="Office">Office</option>
+                <option value="Technology">Technology</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Travel">Travel</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <input
+                {...registerExpense('amount', { required: true })}
+                type="number"
+                step="0.01"
+                placeholder="Amount"
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <input
+                {...registerExpense('date', { required: true })}
+                type="date"
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center"
+            >
+              <Plus size={16} className="mr-2" />
+              Add Expense
+            </button>
+          </form>
+
+          <div className="space-y-3">
+            {expenses.slice(0, 4).map((expense) => (
+              <div key={expense.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div>
+                  <p className="font-medium text-gray-900">{expense.name}</p>
+                  <p className="text-sm text-gray-500">{expense.category} • {expense.date}</p>
+                </div>
+                <span className="font-semibold text-red-600">${expense.amount}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Invoices */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">Invoices</h3>
+            <Users className="text-gray-400" size={20} />
+          </div>
+
+          <form onSubmit={handleInvoiceSubmit(onInvoiceSubmit)} className="space-y-4 mb-6">
+            <input
+              {...registerInvoice('clientName', { required: true })}
+              placeholder="Client Name"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <input
+                {...registerInvoice('amount', { required: true })}
+                type="number"
+                step="0.01"
+                placeholder="Invoice Amount"
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <input
+                {...registerInvoice('dueDate', { required: true })}
+                type="date"
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <select
+              {...registerInvoice('status', { required: true })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Status</option>
+              <option value="Paid">Paid</option>
+              <option value="Unpaid">Unpaid</option>
+            </select>
+            <button
+              type="submit"
+              className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors flex items-center justify-center"
+            >
+              <Plus size={16} className="mr-2" />
+              Add Invoice
+            </button>
+          </form>
+
+          <div className="space-y-3">
+            {invoices.slice(0, 4).map((invoice) => (
+              <div key={invoice.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div>
+                  <p className="font-medium text-gray-900">{invoice.clientName}</p>
+                  <p className="text-sm text-gray-500">Due: {invoice.dueDate}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-gray-900">${invoice.amount.toLocaleString()}</p>
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                    invoice.status === 'Paid' 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {invoice.status === 'Paid' ? <CheckCircle size={12} className="mr-1" /> : <Clock size={12} className="mr-1" />}
+                    {invoice.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CashFlowAssistant;
