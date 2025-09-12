@@ -11,6 +11,8 @@ import Dashboard from "./components/Dashboard";
 import WebsiteDetail from "./components/WebsiteDetail";
 import WidgetConfig from "./components/WidgetConfig";
 import ScrapingPage from "./components/ScrapingPage";
+import UploadForm from './components/uploadForm.jsx';
+import CashflowPage from './components/cashFlowPage.jsx';
 
 function AppContent() {
   const location = useLocation();
@@ -71,6 +73,9 @@ function App() {
       <AuthProvider>
         <Router>
           <AppContent />
+            <Routes>
+             < Route path="/cashflow" element={<CashflowPage/>} />
+            </Routes>
         </Router>
       </AuthProvider>
     </ErrorBoundary>

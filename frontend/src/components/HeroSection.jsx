@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import Chatbot from './Chatbot';
 import CashflowSupplyChain from './CashflowSupplyChain';
-
+import CashflowCard from './cashFLow';
 const HeroSection = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -145,15 +144,7 @@ const HeroSection = () => {
                 It's free. No credit card required.
               </p>
             </div>
-            
-            {/* Right Section - Chatbot Iframe */}
-            <div className="flex items-center justify-center">
-              <div className="h-[550px] w-full max-w-md rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-md">
-                <div className="h-full w-full overflow-hidden rounded-xl bg-white shadow-lg">
-                  <Chatbot />
-                </div>
-              </div>
-            </div>
+            <CashflowCard/>
           </>
         );
 
