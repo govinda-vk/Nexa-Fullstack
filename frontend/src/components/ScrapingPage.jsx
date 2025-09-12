@@ -1,13 +1,124 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Card, Button, Alert, Spinner, Badge, Progress } from "flowbite-react";
 import { useAuth } from '../contexts/AuthContext';
 import { crawlingService, userService } from '../utils/apiServices';
+import LogoAnimation from './LogoAnimation.jsx';
+import { 
+  XMarkIcon,
+  Bars3Icon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  ArrowPathIcon,
+  EyeIcon,
+  ChartBarIcon,
+  GlobeAltIcon
+} from '@heroicons/react/24/outline';
 
 const ScrapingPage = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Custom Button Component
+  const Button = ({ children, onClick, color = 'black', className = '', size = 'md', loading = false, disabled = false, ...props }) => {
+    const baseClasses = 'font-medium rounded-lg transition-all duration-200 flex items-center justify-center';
+    
+    const sizeClasses = {
+      sm: 'px-3 py-2 text-sm',
+      md: 'px-4 py-2 text-sm',
+      lg: 'px-6 py-3 text-base'
+    };
+    
+    const colorClasses = {
+      black: 'bg-black text-white hover:bg-gray-800 focus:ring-4 focus:ring-gray-300',
+      gray: 'bg-gray-100 text-gray-900 hover:bg-gray-200 focus:ring-4 focus:ring-gray-300',
+      red: 'bg-red-600 text-white hover:bg-red-700 focus:ring-4 focus:ring-red-300',
+      green: 'bg-green-600 text-white hover:bg-green-700 focus:ring-4 focus:ring-green-300',
+      blue: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-4 focus:ring-blue-300'
+    };
+    
+    return (
+      <button
+        onClick={onClick}
+        disabled={disabled || loading}
+        className={`${baseClasses} ${sizeClasses[size]} ${colorClasses[color]} ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        {...props}
+      >
+        {loading && <ArrowPathIcon className="animate-spin h-4 w-4 mr-2" />}
+        {children}
+      </button>
+    );
+  };
+
+  // State for mobile menu
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Performance Analytics Card Component (adapted to black/white theme)
+  const PerformanceAnalyticsCard = () => {
+    return (
+      <div className="group relative flex w-full flex-col rounded-xl bg-black p-4 shadow-2xl transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
+        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-gray-400 via-gray-600 to-gray-800 opacity-20 blur-sm transition-opacity duration-300 group-hover:opacity-30"></div>
+        <div className="absolute inset-px rounded-[11px] bg-black"></div>
+
+        <div className="relative">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-gray-700 to-black">
+                <ChartBarIcon className="h-4 w-4 text-white" />
+              </div>
+              <h3 className="text-sm font-semibold text-white"><strong>Scraping Analytics</strong></h3>
+            </div>
+
+            <span className="flex items-center gap-1 rounded-full bg-green-500/10 px-2 py-1 text-xs font-medium text-green-500">
+              <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span>
+              <strong>Live</strong>
+            </span>
+          </div>
+
+          <div className="mb-4 grid grid-cols-2 gap-4">
+            <div className="rounded-lg bg-gray-900/50 p-3">
+              <p className="text-xs font-medium text-gray-400">Pages Found</p>
+              <p className="text-lg font-semibold text-white">{scrapeStatus.totalPagesFound || '0'}</p>
+              <span className="text-xs font-medium text-green-500">+{scrapeStatus.progress || 0}%</span>
+            </div>
+
+            <div className="rounded-lg bg-gray-900/50 p-3">
+              <p className="text-xs font-medium text-gray-400">Processed</p>
+              <p className="text-lg font-semibold text-white">{scrapeStatus.chunksProcessed || '0'}</p>
+              <span className="text-xs font-medium text-green-500">+{Math.round((scrapeStatus.chunksProcessed / Math.max(scrapeStatus.pagesCrawled, 1)) * 100) || 0}%</span>
+            </div>
+          </div>
+
+          <div className="mb-4 h-24 w-full overflow-hidden rounded-lg bg-gray-900/50 p-3">
+            <div className="flex h-full w-full items-end justify-between gap-1">
+              {[40, 60, 75, 45, 85, 65, 95].map((height, index) => (
+                <div key={index} className={`h-[${height}%] w-3 rounded-sm bg-gray-600/30`}>
+                  <div className={`h-[${Math.min(height + 20, 100)}%] w-full rounded-sm bg-white transition-all duration-300`}></div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-gray-400">Current Phase</span>
+              <span className="text-xs font-medium text-white">{scrapeStatus.currentPhase || 'Setup'}</span>
+            </div>
+
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center gap-1 rounded-lg bg-gradient-to-r from-gray-600 to-black px-3 py-1 text-xs font-medium text-white transition-all duration-300 hover:from-gray-700 hover:to-gray-900"
+            >
+              <strong>View Dashboard</strong>
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
   
   const [websiteUrl, setWebsiteUrl] = useState('');
   const [scrapeData, setScrapeData] = useState({
@@ -354,34 +465,174 @@ const ScrapingPage = () => {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#667eea] to-[#764ba2] p-8 flex items-center justify-center">
-        <div className="text-white text-center">
-          <Spinner size="xl" />
-          <p className="mt-4">Checking authentication...</p>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <ArrowPathIcon className="animate-spin h-8 w-8 text-gray-600 mx-auto mb-4" />
+          <p className="text-gray-600">Checking authentication...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#667eea] to-[#764ba2] p-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-white">
+      {/* Navigation */}
+      <nav className="bg-black">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex-shrink-0">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 flex items-center justify-center">
+                  <LogoAnimation />
+                </div>
+                <span className="text-white text-xl font-bold tracking-tight">NEXA</span>
+              </div>
+            </div>
+
+            {/* Navigation Links */}
+            <div className="hidden md:flex items-center space-x-8">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className={`text-white hover:text-gray-300 transition-colors font-medium ${
+                  location?.pathname === '/dashboard' ? 'border-b-2 border-white pb-1' : ''
+                }`}
+              >
+                <strong>Dashboard</strong>
+              </button>
+              <button
+                onClick={() => navigate('/scraping')}
+                className={`text-white hover:text-gray-300 transition-colors font-medium ${
+                  location?.pathname === '/scraping' ? 'border-b-2 border-white pb-1' : ''
+                }`}
+              >
+                <strong>Scraping</strong>
+              </button>
+              <button
+                onClick={() => navigate('/cashflow')}
+                className={`text-white hover:text-gray-300 transition-colors font-medium ${
+                  location?.pathname === '/cashflow' ? 'border-b-2 border-white pb-1' : ''
+                }`}
+              >
+                <strong>Cashflow</strong>
+              </button>
+            </div>
+
+            <div className="hidden md:flex items-center space-x-6">
+              <div className="flex items-center space-x-4">
+                <div className="text-right">
+                  <div className="text-white font-medium"><strong>{user?.firstName || user?.name || user?.email}</strong></div>
+                  <div className="text-white/70 text-sm">{user?.email}</div>
+                </div>
+                
+                <button
+                  onClick={() => {
+                    // logout(); // Uncomment when logout function is available
+                    navigate('/');
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                >
+                  <strong>Logout</strong>
+                </button>
+              </div>
+            </div>
+
+            <div className="md:hidden">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 rounded-md text-white hover:bg-white/10 transition-colors"
+              >
+                {mobileMenuOpen ? (
+                  <XMarkIcon className="h-6 w-6" />
+                ) : (
+                  <Bars3Icon className="h-6 w-6" />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-black/90">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+              {/* Mobile Navigation Links */}
+              <button
+                onClick={() => {
+                  navigate('/dashboard');
+                  setMobileMenuOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 text-base font-medium text-white hover:bg-white/10 rounded-md transition-colors ${
+                  location?.pathname === '/dashboard' ? 'bg-white/20' : ''
+                }`}
+              >
+                <strong>Dashboard</strong>
+              </button>
+              <button
+                onClick={() => {
+                  navigate('/scraping');
+                  setMobileMenuOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 text-base font-medium text-white hover:bg-white/10 rounded-md transition-colors ${
+                  location?.pathname === '/scraping' ? 'bg-white/20' : ''
+                }`}
+              >
+                <strong>Scraping</strong>
+              </button>
+              <button
+                onClick={() => {
+                  navigate('/cashflow');
+                  setMobileMenuOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 text-base font-medium text-white hover:bg-white/10 rounded-md transition-colors ${
+                  location?.pathname === '/cashflow' ? 'bg-white/20' : ''
+                }`}
+              >
+                <strong>Cashflow</strong>
+              </button>
+              
+              <div className="pt-4 border-t border-white/20">
+                <div className="px-3 py-2">
+                  <div className="text-white font-medium"><strong>{user?.firstName || user?.name || user?.email}</strong></div>
+                  <div className="text-white/70 text-sm">{user?.email}</div>
+                </div>
+                
+                <button
+                  onClick={() => {
+                    // logout(); // Uncomment when logout function is available
+                    navigate('/');
+                  }}
+                  className="w-full mt-2 px-3 py-2 text-base font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+                >
+                  <strong>Logout</strong>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </nav>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto p-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">
+          <h1 className="text-4xl font-bold text-black mb-4">
             {getPhaseIcon()} {getPhaseTitle()}
           </h1>
-          <p className="text-white/80">
-            Welcome back, {user?.name || user?.email}! Let's scrape your website and build your AI assistant.
+          <p className="text-gray-600">
+            Welcome back, <strong>{user?.name || user?.email}</strong>! Let's scrape your website and build your AI assistant.
           </p>
+        </div>
+
+        {/* Analytics Card */}
+        <div className="mb-8 max-w-sm mx-auto">
+          <PerformanceAnalyticsCard />
         </div>
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Configuration Panel */}
           <div className="lg:col-span-2">
-            <Card>
-              <h3 className="text-xl font-semibold mb-4">Website Configuration</h3>
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+              <h3 className="text-xl font-semibold text-black mb-4"><strong>Website Configuration</strong></h3>
               
               {/* Information Alert */}
               <div className="mb-6 p-4 bg-blue-50 border-l-4 border-blue-400 rounded">
@@ -441,9 +692,9 @@ const ScrapingPage = () => {
                   <Button 
                     onClick={startScraping}
                     disabled={!websiteUrl.trim() || loading}
-                    className="flex-1 bg-slate-800 p-4 rounded-lg"
+                    className="flex-1"
+                    loading={loading}
                   >
-                    {loading ? <Spinner size="sm" className="mr-2" /> : null}
                     Start Scraping
                   </Button>
                 )}
@@ -452,13 +703,14 @@ const ScrapingPage = () => {
                   <div className="flex gap-2 flex-1">
                     <Button 
                       onClick={() => navigate(`/widget/${scrapeStatus.websiteId}/config`)}
-                      className="flex-1 bg-purple-600 hover:bg-purple-700"
+                      className="flex-1"
+                      color="blue"
                     >
                       Next: Configure Widget
                     </Button>
                     <Button 
                       onClick={() => navigate('/dashboard')} 
-                      variant="outline"
+                      color="gray"
                       className="flex-1"
                     >
                       Go to Dashboard
@@ -494,13 +746,13 @@ const ScrapingPage = () => {
                   Back to Dashboard
                 </Button>
               </div>
-            </Card>
+            </div>
           </div>
 
           {/* Status Panel */}
           <div>
-            <Card>
-              <h3 className="text-xl font-semibold mb-4">Scraping Status</h3>
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+              <h3 className="text-xl font-semibold text-black mb-4"><strong>Scraping Status</strong></h3>
               
               {/* Current Phase Display */}
               {(scrapeStatus.phase === 'scraping' || scrapeStatus.phase === 'completed') && scrapeStatus.currentPhase && (
@@ -508,11 +760,18 @@ const ScrapingPage = () => {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span className="text-lg">{getDetailedPhaseInfo().emoji}</span>
-                      <span className="font-medium text-gray-700">{getDetailedPhaseInfo().title}</span>
+                      <span className="font-medium text-gray-700"><strong>{getDetailedPhaseInfo().title}</strong></span>
                     </div>
-                    <Badge color={getDetailedPhaseInfo().color} size="sm">
-                      {scrapeStatus.currentPhase}
-                    </Badge>
+                    <span className={`inline-block px-2 py-1 text-xs rounded-full font-medium ${
+                      getDetailedPhaseInfo().color === 'blue' ? 'bg-blue-100 text-blue-800' :
+                      getDetailedPhaseInfo().color === 'indigo' ? 'bg-indigo-100 text-indigo-800' :
+                      getDetailedPhaseInfo().color === 'purple' ? 'bg-purple-100 text-purple-800' :
+                      getDetailedPhaseInfo().color === 'green' ? 'bg-green-100 text-green-800' :
+                      getDetailedPhaseInfo().color === 'red' ? 'bg-red-100 text-red-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      <strong>{scrapeStatus.currentPhase}</strong>
+                    </span>
                   </div>
                   <p className="text-sm text-gray-600 mb-3">
                     {getDetailedPhaseInfo().description}
@@ -524,14 +783,15 @@ const ScrapingPage = () => {
               {(scrapeStatus.phase === 'scraping' || scrapeStatus.phase === 'completed') && (
                 <div className="mb-4">
                   <div className="flex justify-between text-sm mb-1">
-                    <span>Progress</span>
-                    <span>{scrapeStatus.progress || 0}%</span>
+                    <span className="text-gray-700"><strong>Progress</strong></span>
+                    <span className="text-gray-700"><strong>{scrapeStatus.progress || 0}%</strong></span>
                   </div>
-                  <Progress 
-                    progress={scrapeStatus.progress || 0} 
-                    color="blue"
-                    className="mb-2"
-                  />
+                  <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                    <div 
+                      className="bg-black h-2 rounded-full transition-all duration-300" 
+                      style={{ width: `${scrapeStatus.progress || 0}%` }}
+                    ></div>
+                  </div>
                   {/* Progress Phase Indicator */}
                   <div className="flex justify-between text-xs text-gray-500">
                     <span className={(scrapeStatus.progress || 0) >= 5 ? 'text-blue-600 font-medium' : ''}>
@@ -573,23 +833,27 @@ const ScrapingPage = () => {
 
               {/* Error Display */}
               {scrapeStatus.error && (
-                <Alert color="failure" className="mb-4">
-                  <strong>Error:</strong> {scrapeStatus.error}
-                </Alert>
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-center">
+                    <ExclamationTriangleIcon className="h-5 w-5 text-red-600 mr-2" />
+                    <strong className="text-red-800">Error:</strong>
+                  </div>
+                  <p className="text-red-700 mt-1">{scrapeStatus.error}</p>
+                </div>
               )}
 
               {/* Activity Logs */}
               <div>
-                <h4 className="font-medium mb-2">Activity Log</h4>
+                <h4 className="font-medium text-black mb-2"><strong>Activity Log</strong></h4>
                 <div className="max-h-64 overflow-y-auto space-y-2">
                   {scrapeStatus.logs.length > 0 ? (
                     scrapeStatus.logs.slice(-10).reverse().map((log, index) => (
                       <div 
                         key={index} 
                         className={`text-xs p-2 rounded-lg ${
-                          log.type === 'error' ? 'bg-red-50 text-red-700' :
-                          log.type === 'success' ? 'bg-green-50 text-green-700' :
-                          'bg-gray-50 text-gray-700'
+                          log.type === 'error' ? 'bg-red-50 text-red-700 border border-red-200' :
+                          log.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' :
+                          'bg-gray-50 text-gray-700 border border-gray-200'
                         }`}
                       >
                         <div className="font-medium">{log.message}</div>
@@ -603,7 +867,7 @@ const ScrapingPage = () => {
                   )}
                 </div>
               </div>
-            </Card>
+            </div>
           </div>
         </div>
       </div>

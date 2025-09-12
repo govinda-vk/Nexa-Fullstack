@@ -65,9 +65,24 @@ const CashflowPage = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <UploadForm onSubmit={handleAnalysis} />
-      {analysisData && <Results analysis={analysisData} />}
+    <div className="min-h-screen bg-white p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Page Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-light text-black mb-4 tracking-tight">
+            Cashflow Analysis
+          </h1>
+          <p className="text-xl text-gray-600 font-light max-w-2xl mx-auto leading-relaxed">
+            Upload your financial data or enter it manually to get AI-powered insights 
+            and recommendations for your business.
+          </p>
+        </div>
+        
+        <div className="space-y-8">
+          <UploadForm onSubmit={handleAnalysis} />
+          {analysisData && <Results analysis={analysisData} />}
+        </div>
+      </div>
     </div>
   );
 };

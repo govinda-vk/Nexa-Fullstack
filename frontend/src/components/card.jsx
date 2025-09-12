@@ -2,10 +2,10 @@ import React from "react";
 
 const Card = ({ title, children }) => {
   return (
-    <div className="bg-gray-900 text-white  p-6 border-2 border-transparent 
-                    shadow-xl  
+    <div className="bg-white border border-gray-200 rounded-2xl p-8 
+                    shadow-sm hover:shadow-md  
                     transition-all duration-300">
-      {title && <h2 className="text-xl font-bold text-[#6B6ED4] mb-4">{title}</h2>}
+      {title && <h2 className="text-2xl font-light text-black mb-6 tracking-tight">{title}</h2>}
       {children}
     </div>
   );

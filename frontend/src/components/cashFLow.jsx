@@ -6,37 +6,37 @@ function CashflowCard() {
 
   return (
     <div
-      className="flex ms-10  justify-center items-center bg-black rounded-3xl shadow-xl"
+      className="flex ms-10 justify-center items-center bg-black rounded-2xl shadow-sm border border-gray-800"
       style={{ width: "485px", height: "485px" }}
     >
       <div
-        className="flex flex-col justify-center items-center text-center rounded-2xl p-6 
-                   border-2 border-transparent shadow-2xl
-                   transition-all duration-500 hover:border-[#6B6ED4] hover:shadow-[0_0_27px_#6B6ED4]"
+        className="flex flex-col justify-center items-center text-center rounded-xl p-8 
+                   border border-gray-700 bg-black
+                   transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
         style={{
           width: "450px",
           height: "450px",
-          background: "linear-gradient(135deg, #6B6ED4 0%, #4B4DCB 100%)",
         }}
       >
         {/* Title */}
-        <h2 className="text-3xl font-extrabold text-white mb-4 drop-shadow-lg">
+        <h2 className="text-4xl font-light text-white mb-6 tracking-tight leading-tight">
           Cashflow Analysis
         </h2>
 
         {/* Description */}
-        <p className="text-white/90 mb-8 max-w-xs leading-relaxed">
+        <p className="text-gray-300 mb-10 max-w-sm leading-relaxed text-lg font-light">
           Get a smart breakdown of your income & expenses with sleek interactive charts.
         </p>
 
         {/* Button */}
         <button
           onClick={() => navigate("/cashflow")}
-          className="bg-white text-[#6B6ED4] px-8 py-3 rounded-xl font-bold shadow-lg 
-                     hover:shadow-[#6B6ED4]/60 hover:scale-110 
-                     transition-transform duration-300"
+          className="bg-white text-black px-10 py-4 rounded-full font-medium text-base
+                     hover:bg-gray-200 
+                     transition-all duration-200 ease-out
+                     border-none shadow-sm hover:shadow-md"
         >
-          Click Here
+          Get Started
         </button>
       </div>
     </div>

@@ -101,16 +101,16 @@ const HeroSection = () => {
         return (
           <>
             {/* Left Content */}
-            <div className="text-white">
-              <p className="mb-4 text-xl font-semibold text-white/90">
-                <strong className="text-2xl text-white">Got a Question? AskIt.</strong> 
+            <div className="text-black">
+              <p className="mb-4 text-xl font-light text-gray-700">
+                <strong className="text-2xl text-black font-medium">Got a Question? AskIt.</strong> 
               </p>
               
-              <h1 className="mb-6 text-5xl font-extrabold leading-tight lg:text-6xl">
+              <h1 className="mb-6 text-5xl font-light leading-tight lg:text-6xl text-black tracking-tight">
                 AI Chatbot for your site
               </h1>
               
-              <p className="mb-10 text-xl leading-relaxed text-white/90">
+              <p className="mb-10 text-xl leading-relaxed text-gray-600 font-light">
                 NEXA AI chatbot instantly learns from your website and uses that knowledge to answer visitor questions — automatically.
               </p>
               
@@ -119,14 +119,14 @@ const HeroSection = () => {
                   {/* Brutalist Input with peer for label interaction */}
                   <input
                     placeholder="www.yourwebsite.com"
-                    className="peer brutalist-input w-full rounded-none border-4 border-black bg-white p-4 text-lg font-bold text-black shadow-brutalist transition-all duration-300 placeholder:text-gray-500 focus:outline-none focus:placeholder:text-transparent"
+                    className="peer brutalist-input w-full rounded-lg border border-gray-300 bg-white p-4 text-lg font-light text-black shadow-sm transition-all duration-300 placeholder:text-gray-400 focus:outline-none focus:border-black focus:shadow-md focus:placeholder:text-transparent"
                     type="text"
                     value={websiteUrl}
                     onChange={(e) => setWebsiteUrl(e.target.value)}
                     onKeyPress={handleKeyPress}
                   />
                   <label
-                    className="absolute -left-1 -top-8 z-10 -rotate-1 bg-black px-2.5 py-1.5 text-sm font-bold text-white transition-all duration-300 peer-focus:rotate-0 peer-focus:scale-105 peer-focus:bg-[#4a90e2]"
+                    className="absolute -left-1 -top-8 z-10 bg-black px-2.5 py-1.5 text-sm font-medium text-white transition-all duration-300 peer-focus:scale-105"
                   >
                     YOUR WEBSITE
                   </label>
@@ -134,13 +134,13 @@ const HeroSection = () => {
                 
                 <button
                   onClick={handleTryNEXA}
-                  className="w-full border-4 border-black bg-[#4f46e5] p-5 font-mono text-lg font-semibold text-white shadow-brutalist transition-colors duration-200 hover:bg-[#4338ca]"
+                  className="w-full bg-black p-5 font-light text-lg text-white shadow-sm transition-all duration-200 hover:bg-gray-800 rounded-lg"
                 >
                   Try NEXA on your website
                 </button>
               </div>
               
-              <p className="mt-6 text-center text-base text-white/80">
+              <p className="mt-6 text-center text-base text-gray-500 font-light">
                 It's free. No credit card required.
               </p>
             </div>
@@ -150,16 +150,16 @@ const HeroSection = () => {
 
       case 'loading':
         return (
-          <div className="col-span-2 text-center text-white">
-            <h2 className="mb-8 text-4xl font-bold">Analyzing your website...</h2>
-            <div className="mb-6 text-xl text-white/80">
+          <div className="col-span-2 text-center text-black">
+            <h2 className="mb-8 text-4xl font-light">Analyzing your website...</h2>
+            <div className="mb-6 text-xl text-gray-600 font-light">
               Processing: {websiteUrl}
             </div>
             {/* Placeholder for loading animation - you can add your animation here */}
             <div className="flex items-center justify-center">
-              <div className="h-16 w-16 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
+              <div className="h-16 w-16 animate-spin rounded-full border-4 border-gray-300 border-t-black"></div>
             </div>
-            <p className="mt-6 text-lg text-white/70">
+            <p className="mt-6 text-lg text-gray-500 font-light">
               This may take a few moments while we analyze your content...
             </p>
           </div>
@@ -167,9 +167,9 @@ const HeroSection = () => {
 
       case 'options':
         return (
-          <div className="col-span-2 text-center text-white">
-            <h2 className="mb-4 text-4xl font-bold">Choose Your Solution</h2>
-            <p className="mb-8 text-xl text-white/80">
+          <div className="col-span-2 text-center text-black">
+            <h2 className="mb-4 text-4xl font-light">Choose Your Solution</h2>
+            <p className="mb-8 text-xl text-gray-600 font-light">
               Website analyzed successfully! Select the option that best fits your needs:
             </p>
             
@@ -179,13 +179,13 @@ const HeroSection = () => {
                 onClick={() => handleOptionSelect('embedded-chatbot')}
                 className="cursor-pointer transform transition-all duration-300 hover:scale-105"
               >
-                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 h-full shadow-2xl hover:bg-white/20">
+                <div className="bg-white border border-gray-200 rounded-2xl p-8 h-full shadow-sm hover:shadow-md">
                   <div className="text-6xl mb-4">🤖</div>
-                  <h3 className="text-2xl font-bold mb-4">Embedded Chatbot</h3>
-                  <p className="text-white/80 text-lg leading-relaxed mb-6">
+                  <h3 className="text-2xl font-medium mb-4 text-black">Embedded Chatbot</h3>
+                  <p className="text-gray-600 text-lg leading-relaxed mb-6 font-light">
                     Add an intelligent chatbot directly to your website. Instantly answer visitor questions using your site's content.
                   </p>
-                  <div className="text-sm text-white/60 space-y-2">
+                  <div className="text-sm text-gray-500 space-y-2 font-light">
                     <div>✓ Easy one-line integration</div>
                     <div>✓ Learns from your website</div>
                     <div>✓ 24/7 customer support</div>
@@ -199,13 +199,13 @@ const HeroSection = () => {
                 onClick={() => handleOptionSelect('cashflow-management')}
                 className="cursor-pointer transform transition-all duration-300 hover:scale-105"
               >
-                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 h-full shadow-2xl hover:bg-white/20">
+                <div className="bg-white border border-gray-200 rounded-2xl p-8 h-full shadow-sm hover:shadow-md">
                   <div className="text-6xl mb-4">📊</div>
-                  <h3 className="text-2xl font-bold mb-4">Cashflow / Supply Chain</h3>
-                  <p className="text-white/80 text-lg leading-relaxed mb-6">
+                  <h3 className="text-2xl font-medium mb-4 text-black">Cashflow / Supply Chain</h3>
+                  <p className="text-gray-600 text-lg leading-relaxed mb-6 font-light">
                     Advanced business intelligence for managing your cashflow and supply chain operations with AI insights.
                   </p>
-                  <div className="text-sm text-white/60 space-y-2">
+                  <div className="text-sm text-gray-500 space-y-2 font-light">
                     <div>✓ Real-time analytics</div>
                     <div>✓ Predictive insights</div>
                     <div>✓ Automated reporting</div>
@@ -217,7 +217,7 @@ const HeroSection = () => {
 
             <button
               onClick={resetToInput}
-              className="mt-8 border-2 border-white/50 bg-transparent px-6 py-3 text-white hover:bg-white/10 transition-colors duration-200"
+              className="mt-8 border border-gray-300 bg-transparent px-6 py-3 text-black hover:bg-gray-50 transition-colors duration-200 rounded-lg font-light"
             >
               ← Back to URL Input
             </button>
@@ -526,7 +526,7 @@ const HeroSection = () => {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#667eea] to-[#764ba2] p-8 font-sans">
+    <div className="flex min-h-screen items-center justify-center bg-white p-8 font-sans">
       <div className="grid max-w-7xl grid-cols-1 items-center gap-16 md:grid-cols-2">
         {renderContent()}
       </div>

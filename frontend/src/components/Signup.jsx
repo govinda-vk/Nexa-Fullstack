@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Button, Card, Label, TextInput, Alert, Select } from "flowbite-react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 
@@ -92,68 +91,82 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#667eea] to-[#764ba2] p-8 flex items-center justify-center">
+    <div className="min-h-screen bg-white p-8 flex items-center justify-center">
       <div className="w-full max-w-lg">
-        <Card className="shadow-2xl">
-          <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Join NEXA AI</h1>
-            <p className="text-gray-600">Create your account to get started</p>
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-light text-black mb-4 tracking-tight">Join NEXA AI</h1>
+            <p className="text-lg text-gray-600 font-light">Create your account to get started</p>
             {websiteUrl && (
-              <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-700">
-                  Ready to scrape: <strong>{websiteUrl}</strong>
+              <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                <p className="text-sm text-gray-700 font-light">
+                  Ready to scrape: <strong className="font-medium">{websiteUrl}</strong>
                 </p>
               </div>
             )}
           </div>
 
           {signupMessage && (
-            <Alert color="info" className="mb-4">
-              {signupMessage}
-            </Alert>
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+              <div className="flex items-center">
+                <span className="text-blue-600 mr-3">ℹ️</span>
+                <span className="text-blue-800 font-light">{signupMessage}</span>
+              </div>
+            </div>
           )}
 
           {error && (
-            <Alert color="failure" className="mb-4">
-              {error}
-            </Alert>
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+              <div className="flex items-center">
+                <span className="text-red-600 mr-3">⚠️</span>
+                <span className="text-red-800 font-light">{error}</span>
+              </div>
+            </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <div className="mb-2 block">
-                  <Label htmlFor="firstName" value="First Name" />
-                </div>
-                <TextInput
+                <label htmlFor="firstName" className="block text-sm font-light text-gray-600 mb-3">
+                  First Name
+                </label>
+                <input
                   id="firstName"
                   name="firstName"
                   type="text"
+                  placeholder="John"
                   required
                   value={formData.firstName}
                   onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-lg bg-gray-50 text-black border border-gray-300 
+                             focus:border-black focus:ring-1 focus:ring-black outline-none
+                             placeholder-gray-400 font-light transition-colors"
                 />
               </div>
               <div>
-                <div className="mb-2 block">
-                  <Label htmlFor="lastName" value="Last Name" />
-                </div>
-                <TextInput
+                <label htmlFor="lastName" className="block text-sm font-light text-gray-600 mb-3">
+                  Last Name
+                </label>
+                <input
                   id="lastName"
                   name="lastName"
                   type="text"
+                  placeholder="Doe"
                   required
                   value={formData.lastName}
                   onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-lg bg-gray-50 text-black border border-gray-300 
+                             focus:border-black focus:ring-1 focus:ring-black outline-none
+                             placeholder-gray-400 font-light transition-colors"
                 />
               </div>
             </div>
 
             <div>
-              <div className="mb-2 block">
-                <Label htmlFor="email" value="Email Address" />
-              </div>
-              <TextInput
+              <label htmlFor="email" className="block text-sm font-light text-gray-600 mb-3">
+                Email Address
+              </label>
+              <input
                 id="email"
                 name="email"
                 type="email"
@@ -161,33 +174,42 @@ const Signup = () => {
                 required
                 value={formData.email}
                 onChange={handleChange}
+                className="w-full px-4 py-3 rounded-lg bg-gray-50 text-black border border-gray-300 
+                           focus:border-black focus:ring-1 focus:ring-black outline-none
+                           placeholder-gray-400 font-light transition-colors"
               />
             </div>
 
             <div>
-              <div className="mb-2 block">
-                <Label htmlFor="company" value="Company (Optional)" />
-              </div>
-              <TextInput
+              <label htmlFor="company" className="block text-sm font-light text-gray-600 mb-3">
+                Company (Optional)
+              </label>
+              <input
                 id="company"
                 name="company"
                 type="text"
                 placeholder="Your company name"
                 value={formData.company}
                 onChange={handleChange}
+                className="w-full px-4 py-3 rounded-lg bg-gray-50 text-black border border-gray-300 
+                           focus:border-black focus:ring-1 focus:ring-black outline-none
+                           placeholder-gray-400 font-light transition-colors"
               />
             </div>
 
             <div>
-              <div className="mb-2 block">
-                <Label htmlFor="role" value="Role" />
-              </div>
-              <Select
+              <label htmlFor="role" className="block text-sm font-light text-gray-600 mb-3">
+                Role
+              </label>
+              <select
                 id="role"
                 name="role"
                 required
                 value={formData.role}
                 onChange={handleChange}
+                className="w-full px-4 py-3 rounded-lg bg-gray-50 text-black border border-gray-300 
+                           focus:border-black focus:ring-1 focus:ring-black outline-none
+                           font-light transition-colors"
               >
                 <option value="">Select your role</option>
                 <option value="business-owner">Business Owner</option>
@@ -195,39 +217,47 @@ const Signup = () => {
                 <option value="marketing">Marketing</option>
                 <option value="sales">Sales</option>
                 <option value="other">Other</option>
-              </Select>
+              </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <div className="mb-2 block">
-                  <Label htmlFor="password" value="Password" />
-                </div>
-                <TextInput
+                <label htmlFor="password" className="block text-sm font-light text-gray-600 mb-3">
+                  Password
+                </label>
+                <input
                   id="password"
                   name="password"
                   type="password"
+                  placeholder="your-password"
                   required
                   value={formData.password}
                   onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-lg bg-gray-50 text-black border border-gray-300 
+                             focus:border-black focus:ring-1 focus:ring-black outline-none
+                             placeholder-gray-400 font-light transition-colors"
                 />
               </div>
               <div>
-                <div className="mb-2 block">
-                  <Label htmlFor="confirmPassword" value="Confirm Password" />
-                </div>
-                <TextInput
+                <label htmlFor="confirmPassword" className="block text-sm font-light text-gray-600 mb-3">
+                  Confirm Password
+                </label>
+                <input
                   id="confirmPassword"
                   name="confirmPassword"
                   type="password"
+                  placeholder="confirm-password"
                   required
                   value={formData.confirmPassword}
                   onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-lg bg-gray-50 text-black border border-gray-300 
+                             focus:border-black focus:ring-1 focus:ring-black outline-none
+                             placeholder-gray-400 font-light transition-colors"
                 />
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-start gap-3">
               <input
                 type="checkbox"
                 id="agreeToTerms"
@@ -235,31 +265,33 @@ const Signup = () => {
                 checked={formData.agreeToTerms}
                 onChange={handleChange}
                 required
+                className="mt-1 w-4 h-4 text-black bg-gray-50 border-gray-300 rounded focus:ring-black focus:ring-2"
               />
-              <Label htmlFor="agreeToTerms" className="text-sm">
+              <label htmlFor="agreeToTerms" className="text-sm font-light text-gray-600 leading-relaxed">
                 I agree to the{' '}
-                <button type="button" className="text-blue-600 hover:underline">
+                <button type="button" className="text-black hover:text-gray-600 font-medium transition-colors">
                   Terms of Service
                 </button>{' '}
                 and{' '}
-                <button type="button" className="text-blue-600 hover:underline">
+                <button type="button" className="text-black hover:text-gray-600 font-medium transition-colors">
                   Privacy Policy
                 </button>
-              </Label>
+              </label>
             </div>
 
-            <Button
+            <button
               type="submit"
-              className="w-full bg-slate-800"
               disabled={loading}
-              isProcessing={loading}
+              className="w-full bg-black text-white py-4 rounded-full font-medium text-base
+                         hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md
+                         disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Creating Account...' : 'Create Account'}
-            </Button>
+            </button>
           </form>
 
-          <div className="text-center mt-6 pt-6 border-t border-gray-200">
-            <p className="text-gray-600">
+          <div className="text-center mt-8 pt-6 border-t border-gray-200">
+            <p className="text-gray-600 font-light">
               Already have an account?{' '}
               <button
                 onClick={() => navigate('/login', { 
@@ -269,13 +301,13 @@ const Signup = () => {
                     message: signupMessage || 'Sign in to continue with website scraping'
                   }
                 })}
-                className="text-blue-600 hover:underline font-medium"
+                className="text-black hover:text-gray-600 font-medium transition-colors"
               >
                 Sign in here
               </button>
             </p>
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );
