@@ -39,23 +39,46 @@ async function getJobStatus(jobId) {
   
   let status;
   let message;
+  let phase = 'unknown';
+  let phaseDescription = '';
+  
+  // Determine current phase based on progress
+  if (progress >= 0 && progress < 5) {
+    phase = 'initializing';
+    phaseDescription = 'Preparing to crawl website';
+  } else if (progress >= 5 && progress <= 40) {
+    phase = 'crawling';
+    phaseDescription = 'Discovering and crawling website pages';
+  } else if (progress > 40 && progress < 100) {
+    phase = 'processing';
+    phaseDescription = 'Processing content and creating embeddings';
+  } else if (progress === 100) {
+    phase = 'completed';
+    phaseDescription = 'All tasks completed successfully';
+  }
   
   switch (state) {
     case 'waiting':
       status = 'waiting';
       message = 'Job is waiting in queue';
+      phase = 'queued';
+      phaseDescription = 'Job is queued for processing';
       break;
     case 'active':
       status = 'processing';
-      message = 'Job is currently processing';
+      message = phaseDescription || 'Job is currently processing';
       break;
     case 'completed':
       status = 'completed';
       message = 'Job completed successfully';
+      phase = 'completed';
+      phaseDescription = 'All tasks completed successfully';
       break;
     case 'failed':
       status = 'failed';
       message = job.failedReason || 'Job failed with unknown error';
+      phase = 'failed';
+      phaseDescription = 'Job encountered an error and failed';
       break;
     default:
       status = 'unknown';
@@ -67,6 +90,8 @@ async function getJobStatus(jobId) {
     status,
     message,
     progress,
+    phase,
+    phaseDescription,
     data: job.data,
     result: job.returnvalue,
     createdAt: new Date(job.timestamp),

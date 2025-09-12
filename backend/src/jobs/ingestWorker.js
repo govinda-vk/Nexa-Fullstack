@@ -86,12 +86,17 @@ const worker = new Worker("ingest", async job => {
     await job.updateProgress(5);
     console.log(`Starting crawl for ${websiteUrl}...`);
 
-    const crawlResult = await crawlWebsite(websiteUrl, 10); // Reduced from 200 to 10
+    // Create progress callback function for crawler
+    const crawlProgressCallback = async (progress, message) => {
+      await job.updateProgress(progress);
+      console.log(`Crawl progress: ${progress}% - ${message}`);
+    };
+
+    const crawlResult = await crawlWebsite(websiteUrl, 10, crawlProgressCallback); // Pass progress callback
     if (!crawlResult.success) {
       throw new Error(`Crawling failed: ${crawlResult.error}`);
     }
     
-    await job.updateProgress(40);
     const pages = crawlResult.results;
     console.log(`Crawled ${pages.length} pages`);
 

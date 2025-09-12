@@ -294,7 +294,7 @@ function uniqueKeepOrder(arr) {
   return result;
 }
 
-async function crawlWebsite(rootUrl, maxPages = 10) {
+async function crawlWebsite(rootUrl, maxPages = 10, progressCallback = null) {
   try {
     // Input validation
     if (!rootUrl || typeof rootUrl !== 'string') {
@@ -324,14 +324,30 @@ async function crawlWebsite(rootUrl, maxPages = 10) {
 
     let processedPages = 0;
     const maxProcessingAttempts = maxPages * 3; // Allow more attempts to find good pages
+    let lastReportedProgress = 0;
 
     console.log(`🔍 Starting crawl of ${rootUrl} (max ${maxPages} pages)`);
+
+    // Initial progress update
+    if (progressCallback) {
+      await progressCallback(5, `Starting crawl of ${rootUrl}...`);
+      lastReportedProgress = 5;
+    }
 
     while (queue.length && results.length < maxPages && processedPages < maxProcessingAttempts) {
       const url = queue.shift();
       processedPages++;
 
       console.log(`📄 Crawling page ${processedPages}: ${url}`);
+
+      // Update progress at start of page processing
+      // Progress range: 5% to 40% (35% total for crawling phase)  
+      // Use a simple linear progression based on target pages
+      const startProgress = Math.min(5 + Math.floor((processedPages - 1) / maxPages * 35), 39);
+      if (progressCallback && startProgress > lastReportedProgress) {
+        await progressCallback(startProgress, `Starting page ${processedPages}: ${url}`);
+        lastReportedProgress = startProgress;
+      }
 
       // Check robots.txt
       if (robots && !robots.isAllowed(url, "Mozilla/5.0")) {
@@ -371,6 +387,13 @@ async function crawlWebsite(rootUrl, maxPages = 10) {
       if (textResult.text.length > 20) {
         results.push({ url, text: textResult.text });
         console.log(`✅ Successfully crawled ${url} (${textResult.text.length} chars)`);
+        
+        // Update progress after successfully processing a page
+        const completedProgress = Math.min(5 + Math.floor((results.length) / maxPages * 35), 39);
+        if (progressCallback && completedProgress > lastReportedProgress) {
+          await progressCallback(completedProgress, `Completed ${results.length}/${maxPages} pages: ${url}`);
+          lastReportedProgress = completedProgress;
+        }
       } else {
         console.log(`⚠️  Page ${url} has insufficient content (${textResult.text.length} chars)`);
       }
@@ -411,6 +434,15 @@ async function crawlWebsite(rootUrl, maxPages = 10) {
         });
         
         console.log(`🔗 Added ${linksAdded} new links from ${url}`);
+        
+        // Small progress update after link discovery
+        if (linksAdded > 0 && progressCallback) {
+          const linkProgress = Math.min(lastReportedProgress + 1, 39);
+          if (linkProgress > lastReportedProgress) {
+            await progressCallback(linkProgress, `Discovered ${linksAdded} new links from ${url}`);
+            lastReportedProgress = linkProgress;
+          }
+        }
       } catch (linkParsingError) {
         errors.push({ url, error: "Failed to parse links from page" });
       }
@@ -420,6 +452,11 @@ async function crawlWebsite(rootUrl, maxPages = 10) {
     }
 
     console.log(`✅ Crawl completed: ${results.length} pages found, ${errors.length} errors`);
+
+    // Final crawling progress update
+    if (progressCallback) {
+      await progressCallback(40, `Crawling completed: ${results.length} pages found`);
+    }
 
     return { 
       success: true, 

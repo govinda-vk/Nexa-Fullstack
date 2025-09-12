@@ -14,12 +14,43 @@ const WebsiteDetail = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [crawlProgress, setCrawlProgress] = useState(null);
+  const [widgetUpdateLoading, setWidgetUpdateLoading] = useState(false);
+  const [widgetUpdateError, setWidgetUpdateError] = useState(null);
+  const [widgetUpdateSuccess, setWidgetUpdateSuccess] = useState(false);
   
   // Update form state
   const [updateData, setUpdateData] = useState({
     title: '',
     description: '',
     status: ''
+  });
+
+  // Widget configuration form state
+  const [widgetConfig, setWidgetConfig] = useState({
+    isActive: true,
+    allowedDomains: [],
+    config: {
+      theme: 'light',
+      primaryColor: '#667eea',
+      position: 'bottom-right',
+      size: 'medium',
+      autoOpen: false,
+      showWelcomeMessage: true,
+      welcomeMessage: 'Hello! How can I help you today?',
+      placeholder: 'Type your message here...',
+      title: 'Chat Assistant',
+      subtitle: 'AI-powered support',
+      avatar: null,
+      showPoweredBy: true,
+      maxMessages: 50,
+      sessionTimeout: 1800,
+      allowFileUploads: false,
+      allowFeedback: true
+    },
+    rateLimits: {
+      messagesPerMinute: 10,
+      messagesPerHour: 100
+    }
   });
 
   // Load website data
@@ -61,6 +92,37 @@ const WebsiteDetail = () => {
         description: websiteDetails.description || '',
         status: websiteDetails.status || ''
       });
+
+      // Initialize widget config form if widget exists
+      if (widgetData) {
+        setWidgetConfig({
+          isActive: widgetData.isActive ?? true,
+          allowedDomains: widgetData.allowedDomains || [],
+          config: {
+            theme: widgetData.config?.theme || 'light',
+            primaryColor: widgetData.config?.primaryColor || '#667eea',
+            position: widgetData.config?.position || 'bottom-right',
+            size: widgetData.config?.size || 'medium',
+            autoOpen: widgetData.config?.autoOpen ?? false,
+            showWelcomeMessage: widgetData.config?.showWelcomeMessage ?? true,
+            welcomeMessage: widgetData.config?.welcomeMessage || 'Hello! How can I help you today?',
+            placeholder: widgetData.config?.placeholder || 'Type your message here...',
+            title: widgetData.config?.title || 'Chat Assistant',
+            subtitle: widgetData.config?.subtitle || 'AI-powered support',
+            avatar: widgetData.config?.avatar || null,
+            showPoweredBy: widgetData.config?.showPoweredBy ?? true,
+            maxMessages: widgetData.config?.maxMessages || 50,
+            sessionTimeout: widgetData.config?.sessionTimeout || 1800,
+            allowFileUploads: widgetData.config?.allowFileUploads ?? false,
+            allowFeedback: widgetData.config?.allowFeedback ?? true
+          },
+          rateLimits: {
+            messagesPerMinute: widgetData.rateLimits?.messagesPerMinute || 10,
+            messagesPerHour: widgetData.rateLimits?.messagesPerHour || 100
+          }
+        });
+      }
+      
       setError(null);
       
       // Check crawl status if crawling
@@ -136,7 +198,72 @@ const WebsiteDetail = () => {
     }
   };
 
-  // Update widget status (activate/deactivate)
+  // Update widget configuration
+  const handleUpdateWidget = async (e) => {
+    e.preventDefault();
+    setWidgetUpdateLoading(true);
+    setWidgetUpdateError(null);
+    setWidgetUpdateSuccess(false);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/widget/website/${websiteId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(widgetConfig)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      setWidgetUpdateSuccess(true);
+      
+      // Reload website data to show updated widget configuration
+      await loadWebsiteData();
+      
+      // Hide success message after 3 seconds
+      setTimeout(() => setWidgetUpdateSuccess(false), 3000);
+      
+    } catch (err) {
+      console.error('Error updating widget:', err);
+      setWidgetUpdateError(err.message);
+    } finally {
+      setWidgetUpdateLoading(false);
+    }
+  };
+
+  // Handle widget configuration field changes
+  const handleWidgetConfigChange = (field, value, isNestedConfig = false) => {
+    if (isNestedConfig) {
+      setWidgetConfig(prev => ({
+        ...prev,
+        config: {
+          ...prev.config,
+          [field]: value
+        }
+      }));
+    } else if (field === 'rateLimits') {
+      setWidgetConfig(prev => ({
+        ...prev,
+        rateLimits: {
+          ...prev.rateLimits,
+          ...value
+        }
+      }));
+    } else {
+      setWidgetConfig(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
+  };
+
+  // Update widget status (activate/deactivate) - kept for backward compatibility
   const handleUpdateWidgetStatus = async () => {
     try {
       const newStatus = !websiteData.widget.isActive;
@@ -164,6 +291,25 @@ const WebsiteDetail = () => {
       console.error('Error updating widget status:', err);
       alert(`Error updating widget status: ${err.message}`);
     }
+  };
+
+  // Add allowed domain
+  const addAllowedDomain = () => {
+    const domain = prompt('Enter allowed domain (e.g., example.com or *.example.com):');
+    if (domain && domain.trim()) {
+      setWidgetConfig(prev => ({
+        ...prev,
+        allowedDomains: [...prev.allowedDomains, domain.trim()]
+      }));
+    }
+  };
+
+  // Remove allowed domain
+  const removeAllowedDomain = (index) => {
+    setWidgetConfig(prev => ({
+      ...prev,
+      allowedDomains: prev.allowedDomains.filter((_, i) => i !== index)
+    }));
   };
 
   // Get status color
@@ -281,6 +427,17 @@ const WebsiteDetail = () => {
                 }`}
               >
                 Overview
+              </button>
+              <button
+                onClick={() => setActiveTab('edit-widget')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'edit-widget'
+                    ? 'border-white text-white'
+                    : 'border-transparent text-white/60 hover:text-white hover:border-white/50'
+                }`}
+                disabled={!widget}
+              >
+                Edit Widget
               </button>
               <button
                 onClick={() => setActiveTab('actions')}
@@ -419,6 +576,354 @@ const WebsiteDetail = () => {
                 )}
               </Card>
             </div>
+          )}
+
+          {activeTab === 'edit-widget' && widget && (
+            <Card>
+              <h3 className="text-xl font-semibold mb-6">Edit Widget Configuration</h3>
+              
+              {widgetUpdateSuccess && (
+                <Alert color="success" className="mb-4">
+                  Widget configuration updated successfully!
+                </Alert>
+              )}
+              
+              {widgetUpdateError && (
+                <Alert color="failure" className="mb-4">
+                  Error: {widgetUpdateError}
+                </Alert>
+              )}
+
+              <form onSubmit={handleUpdateWidget} className="space-y-6">
+                {/* Basic Settings */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Label htmlFor="isActive" className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="isActive"
+                        checked={widgetConfig.isActive}
+                        onChange={(e) => handleWidgetConfigChange('isActive', e.target.checked)}
+                        className="rounded border-gray-300"
+                      />
+                      Widget Active
+                    </Label>
+                    <p className="text-sm text-gray-500 mt-1">Enable or disable the widget</p>
+                  </div>
+                </div>
+
+                {/* Appearance Settings */}
+                <div className="border-t pt-6">
+                  <h4 className="text-lg font-medium mb-4">Appearance</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="theme" value="Theme" />
+                      <select
+                        id="theme"
+                        value={widgetConfig.config.theme}
+                        onChange={(e) => handleWidgetConfigChange('theme', e.target.value, true)}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      >
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                        <option value="auto">Auto</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="primaryColor" value="Primary Color" />
+                      <div className="flex gap-2 mt-1">
+                        <input
+                          type="color"
+                          id="primaryColor"
+                          value={widgetConfig.config.primaryColor}
+                          onChange={(e) => handleWidgetConfigChange('primaryColor', e.target.value, true)}
+                          className="h-10 w-20 rounded border border-gray-300"
+                        />
+                        <TextInput
+                          value={widgetConfig.config.primaryColor}
+                          onChange={(e) => handleWidgetConfigChange('primaryColor', e.target.value, true)}
+                          placeholder="#667eea"
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="position" value="Position" />
+                      <select
+                        id="position"
+                        value={widgetConfig.config.position}
+                        onChange={(e) => handleWidgetConfigChange('position', e.target.value, true)}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      >
+                        <option value="bottom-right">Bottom Right</option>
+                        <option value="bottom-left">Bottom Left</option>
+                        <option value="top-right">Top Right</option>
+                        <option value="top-left">Top Left</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="size" value="Size" />
+                      <select
+                        id="size"
+                        value={widgetConfig.config.size}
+                        onChange={(e) => handleWidgetConfigChange('size', e.target.value, true)}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      >
+                        <option value="small">Small</option>
+                        <option value="medium">Medium</option>
+                        <option value="large">Large</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Messages and Content */}
+                <div className="border-t pt-6">
+                  <h4 className="text-lg font-medium mb-4">Messages & Content</h4>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="title" value="Widget Title" />
+                        <TextInput
+                          id="title"
+                          value={widgetConfig.config.title}
+                          onChange={(e) => handleWidgetConfigChange('title', e.target.value, true)}
+                          placeholder="Chat Assistant"
+                          maxLength={50}
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="subtitle" value="Widget Subtitle" />
+                        <TextInput
+                          id="subtitle"
+                          value={widgetConfig.config.subtitle}
+                          onChange={(e) => handleWidgetConfigChange('subtitle', e.target.value, true)}
+                          placeholder="AI-powered support"
+                          maxLength={100}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="welcomeMessage" value="Welcome Message" />
+                      <Textarea
+                        id="welcomeMessage"
+                        value={widgetConfig.config.welcomeMessage}
+                        onChange={(e) => handleWidgetConfigChange('welcomeMessage', e.target.value, true)}
+                        placeholder="Hello! How can I help you today?"
+                        rows={2}
+                        maxLength={200}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="placeholder" value="Input Placeholder" />
+                      <TextInput
+                        id="placeholder"
+                        value={widgetConfig.config.placeholder}
+                        onChange={(e) => handleWidgetConfigChange('placeholder', e.target.value, true)}
+                        placeholder="Type your message here..."
+                        maxLength={100}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Behavior Settings */}
+                <div className="border-t pt-6">
+                  <h4 className="text-lg font-medium mb-4">Behavior</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <Label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={widgetConfig.config.autoOpen}
+                          onChange={(e) => handleWidgetConfigChange('autoOpen', e.target.checked, true)}
+                          className="rounded border-gray-300"
+                        />
+                        Auto-open on page load
+                      </Label>
+
+                      <Label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={widgetConfig.config.showWelcomeMessage}
+                          onChange={(e) => handleWidgetConfigChange('showWelcomeMessage', e.target.checked, true)}
+                          className="rounded border-gray-300"
+                        />
+                        Show welcome message
+                      </Label>
+
+                      <Label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={widgetConfig.config.allowFileUploads}
+                          onChange={(e) => handleWidgetConfigChange('allowFileUploads', e.target.checked, true)}
+                          className="rounded border-gray-300"
+                        />
+                        Allow file uploads
+                      </Label>
+
+                      <Label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={widgetConfig.config.allowFeedback}
+                          onChange={(e) => handleWidgetConfigChange('allowFeedback', e.target.checked, true)}
+                          className="rounded border-gray-300"
+                        />
+                        Allow user feedback
+                      </Label>
+
+                      <Label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={widgetConfig.config.showPoweredBy}
+                          onChange={(e) => handleWidgetConfigChange('showPoweredBy', e.target.checked, true)}
+                          className="rounded border-gray-300"
+                        />
+                        Show "Powered by NEXA"
+                      </Label>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="maxMessages" value="Max Messages in History" />
+                        <TextInput
+                          id="maxMessages"
+                          type="number"
+                          min="1"
+                          max="200"
+                          value={widgetConfig.config.maxMessages}
+                          onChange={(e) => handleWidgetConfigChange('maxMessages', parseInt(e.target.value) || 50, true)}
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="sessionTimeout" value="Session Timeout (seconds)" />
+                        <TextInput
+                          id="sessionTimeout"
+                          type="number"
+                          min="300"
+                          max="7200"
+                          value={widgetConfig.config.sessionTimeout}
+                          onChange={(e) => handleWidgetConfigChange('sessionTimeout', parseInt(e.target.value) || 1800, true)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Rate Limits */}
+                <div className="border-t pt-6">
+                  <h4 className="text-lg font-medium mb-4">Rate Limits</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="messagesPerMinute" value="Messages Per Minute" />
+                      <TextInput
+                        id="messagesPerMinute"
+                        type="number"
+                        min="1"
+                        max="60"
+                        value={widgetConfig.rateLimits.messagesPerMinute}
+                        onChange={(e) => handleWidgetConfigChange('rateLimits', { messagesPerMinute: parseInt(e.target.value) || 10 })}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="messagesPerHour" value="Messages Per Hour" />
+                      <TextInput
+                        id="messagesPerHour"
+                        type="number"
+                        min="1"
+                        max="1000"
+                        value={widgetConfig.rateLimits.messagesPerHour}
+                        onChange={(e) => handleWidgetConfigChange('rateLimits', { messagesPerHour: parseInt(e.target.value) || 100 })}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Allowed Domains */}
+                <div className="border-t pt-6">
+                  <h4 className="text-lg font-medium mb-4">Allowed Domains</h4>
+                  <div className="space-y-3">
+                    {widgetConfig.allowedDomains.map((domain, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <TextInput
+                          value={domain}
+                          onChange={(e) => {
+                            const newDomains = [...widgetConfig.allowedDomains];
+                            newDomains[index] = e.target.value;
+                            handleWidgetConfigChange('allowedDomains', newDomains);
+                          }}
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          color="failure"
+                          size="sm"
+                          onClick={() => removeAllowedDomain(index)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      color="gray"
+                      size="sm"
+                      onClick={addAllowedDomain}
+                    >
+                      Add Domain
+                    </Button>
+                    <p className="text-sm text-gray-500">
+                      Leave empty to allow all domains. Use *.example.com for subdomains.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <div className="border-t pt-6">
+                  <div className="flex justify-end gap-3">
+                    <Button
+                      type="button"
+                      color="gray"
+                      onClick={() => setActiveTab('overview')}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={widgetUpdateLoading}
+                      className="bg-gradient-to-r from-[#667eea] to-[#764ba2]"
+                    >
+                      {widgetUpdateLoading ? <Spinner size="sm" className="mr-2" /> : null}
+                      {widgetUpdateLoading ? 'Updating...' : 'Update Widget'}
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </Card>
+          )}
+
+          {activeTab === 'edit-widget' && !widget && (
+            <Card>
+              <div className="text-center py-8">
+                <h3 className="text-xl font-semibold mb-4">No Widget Found</h3>
+                <p className="text-gray-600 mb-4">
+                  This website doesn't have a widget yet. The widget is automatically created after the website processing is complete.
+                </p>
+                {websiteData?.website?.status === 'completed' && (
+                  <Button onClick={handleCreateWidget}>
+                    Create Widget Now
+                  </Button>
+                )}
+              </div>
+            </Card>
           )}
 
           {activeTab === 'actions' && (

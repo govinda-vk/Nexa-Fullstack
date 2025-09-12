@@ -96,7 +96,7 @@ const widgetSchema = new mongoose.Schema({
       type: Number,
       default: 30, // minutes
       min: 5,
-      max: 120
+      max: 7200 // 5 days in minutes (was 120)
     },
     allowFileUploads: {
       type: Boolean,

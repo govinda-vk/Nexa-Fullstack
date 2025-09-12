@@ -22,6 +22,7 @@ const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
 const widgetRoutes = require("./routes/widget");
 const widgetApiRoutes = require("./routes/widgetApi");
+const cashflowRoutes = require("./cashflow-analysis/routes/cashflowRoutes");
 
 // Widget utilities
 const { generateWidgetScript } = require("./utils/widgetScript");
@@ -48,6 +49,7 @@ app.use(helmet({
         "'unsafe-eval'", // Allow eval for dynamic script loading
         "https://generativelanguage.googleapis.com", // Gemini API
         "https://www.google-analytics.com", // Analytics if needed
+        "https://cdn.jsdelivr.net", // Chart.js CDN
       ],
       scriptSrcAttr: ["'unsafe-inline'"], // Allow inline event handlers
       styleSrc: ["'self'", "'unsafe-inline'"], // Allow inline styles
@@ -102,6 +104,9 @@ app.use('/widget', widgetRoutes);
 
 // Widget API routes (for embedded widgets)
 app.use('/widget', widgetApiRoutes);
+
+// Cashflow analysis routes
+app.use('/api/cashflow', cashflowRoutes);
 
 // POST /ingest { websiteUrl } - Requires authentication
 app.post("/ingest", authenticateToken, async (req, res) => {

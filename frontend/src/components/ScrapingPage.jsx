@@ -22,11 +22,14 @@ const ScrapingPage = () => {
   
   const [scrapeStatus, setScrapeStatus] = useState({
     phase: 'setup', // 'setup', 'scraping', 'completed', 'error'
+    currentPhase: null, // Backend phase: 'initializing', 'crawling', 'processing', 'completed', 'failed'
+    phaseDescription: null,
     jobId: null,
     websiteId: null,
     progress: 0,
     pagesCrawled: 0,
     chunksProcessed: 0,
+    totalPagesFound: 0,
     error: null,
     logs: []
   });
@@ -72,6 +75,85 @@ const ScrapingPage = () => {
     }));
   };
 
+  // Map backend phase names to frontend phase names
+  const mapBackendPhaseToFrontend = (backendPhase, status) => {
+    if (status === 'completed') return 'completed';
+    if (status === 'failed' || backendPhase === 'failed') return 'error';
+    
+    switch (backendPhase) {
+      case 'initializing': return 'scraping';
+      case 'crawling': return 'scraping';
+      case 'processing': return 'scraping';
+      case 'completed': return 'completed';
+      case 'failed': return 'error';
+      default: return 'scraping';
+    }
+  };
+
+  // Get emoji for backend phase
+  const getPhaseEmoji = (backendPhase) => {
+    switch (backendPhase) {
+      case 'initializing': return '🚀';
+      case 'crawling': return '🔍';
+      case 'processing': return '⚙️';
+      case 'completed': return '🎉';
+      case 'failed': return '❌';
+      default: return '📊';
+    }
+  };
+
+  // Get detailed phase description for display
+  const getDetailedPhaseInfo = () => {
+    const { currentPhase, phaseDescription, progress } = scrapeStatus;
+    
+    if (!currentPhase) return { title: 'Processing...', description: 'Please wait...' };
+    
+    switch (currentPhase) {
+      case 'initializing':
+        return {
+          title: 'Initializing',
+          description: phaseDescription || 'Preparing to crawl website...',
+          emoji: '🚀',
+          color: 'blue'
+        };
+      case 'crawling':
+        return {
+          title: 'Crawling',
+          description: phaseDescription || 'Discovering and crawling website pages...',
+          emoji: '🔍',
+          color: 'indigo'
+        };
+      case 'processing':
+        return {
+          title: 'Processing',
+          description: phaseDescription || 'Processing content and creating embeddings...',
+          emoji: '⚙️',
+          color: 'purple'
+        };
+      case 'completed':
+        return {
+          title: 'Completed',
+          description: 'All tasks completed successfully!',
+          emoji: '🎉',
+          color: 'green'
+        };
+      case 'failed':
+        return {
+          title: 'Failed',
+          description: 'Job encountered an error and failed',
+          emoji: '❌',
+          color: 'red'
+        };
+      default:
+        return {
+          title: 'Processing',
+          description: 'Working on your website...',
+          emoji: '📊',
+          color: 'blue'
+        };
+    }
+  };
+
   const startScraping = async () => {
     if (!websiteUrl.trim()) {
       addLog('Please enter a valid website URL', 'error');
@@ -79,12 +161,18 @@ const ScrapingPage = () => {
     }
 
     setLoading(true);
-    setScrapeStatus(prev => ({ ...prev, phase: 'scraping', progress: 0 }));
-    addLog('Starting website scraping process...', 'info');
+    setScrapeStatus(prev => ({ 
+      ...prev, 
+      phase: 'scraping', 
+      currentPhase: 'initializing',
+      phaseDescription: 'Preparing to crawl website...',
+      progress: 0 
+    }));
+    addLog('🚀 Starting website scraping process...', 'info');
 
     try {
       // Step 1: Start the crawl using the backend API
-      addLog(`Initiating crawl for: ${websiteUrl}`, 'info');
+      addLog(`🔗 Initiating crawl for: ${websiteUrl}`, 'info');
       
       const crawlResponse = await crawlingService.startCrawl({
         websiteUrl: websiteUrl  // Backend expects 'websiteUrl' not 'url'
@@ -92,25 +180,27 @@ const ScrapingPage = () => {
         // All other settings will use backend defaults
       });
 
-      addLog('Crawl job started successfully!', 'success');
+      addLog('✅ Crawl job started successfully!', 'success');
       
       setScrapeStatus(prev => ({
         ...prev,
         jobId: crawlResponse.jobId,
         websiteId: crawlResponse.websiteId,
-        progress: 10
+        currentPhase: 'initializing',
+        progress: 5
       }));
 
       // Step 2: Monitor the job status
-      addLog('Monitoring crawl progress...', 'info');
+      addLog('📊 Monitoring crawl progress...', 'info');
       monitorCrawlProgress(crawlResponse.jobId);
 
     } catch (error) {
       console.error('Error starting crawl:', error);
-      addLog(`Error starting crawl: ${error.message}`, 'error');
+      addLog(`❌ Error starting crawl: ${error.message}`, 'error');
       setScrapeStatus(prev => ({ 
         ...prev, 
-        phase: 'error', 
+        phase: 'error',
+        currentPhase: 'failed',
         error: error.message 
       }));
       setLoading(false);
@@ -127,22 +217,38 @@ const ScrapingPage = () => {
         attempts++;
         const statusResponse = await crawlingService.getJobStatus(jobId);
         
-        addLog(`Job status: ${statusResponse.status} - Progress: ${statusResponse.progress}%`, 'info');
+        // Enhanced logging with phase information
+        const phaseEmoji = getPhaseEmoji(statusResponse.phase);
+        const currentProgress = statusResponse.progress !== undefined ? statusResponse.progress : scrapeStatus.progress;
+        addLog(`${phaseEmoji} ${statusResponse.phaseDescription || statusResponse.message} - ${currentProgress}%`, 'info');
+        
+        console.log('Progress Update:', {
+          phase: statusResponse.phase,
+          progress: statusResponse.progress,
+          currentProgress,
+          status: statusResponse.status
+        });
         
         setScrapeStatus(prev => ({
           ...prev,
-          progress: statusResponse.progress || 0,
-          pagesCrawled: statusResponse.pagesCrawled || 0,
-          chunksProcessed: statusResponse.chunksProcessed || 0
+          progress: statusResponse.progress !== undefined ? statusResponse.progress : prev.progress,
+          phase: mapBackendPhaseToFrontend(statusResponse.phase, statusResponse.status),
+          currentPhase: statusResponse.phase,
+          phaseDescription: statusResponse.phaseDescription,
+          pagesCrawled: statusResponse.result?.pagesIngested || statusResponse.pagesCrawled || prev.pagesCrawled || 0,
+          chunksProcessed: statusResponse.result?.chunksProcessed || statusResponse.chunksProcessed || prev.chunksProcessed || 0,
+          totalPagesFound: statusResponse.result?.crawlStats?.pagesFound || prev.totalPagesFound || 0
         }));
 
         if (statusResponse.status === 'completed') {
-          addLog('Website scraping completed successfully!', 'success');
-          addLog('AI widget is being auto-generated for your website...', 'info');
+          addLog('🎉 Website scraping completed successfully!', 'success');
+          addLog('🤖 AI widget is being auto-generated for your website...', 'info');
           setScrapeStatus(prev => ({ 
             ...prev, 
             phase: 'completed',
-            progress: 100
+            currentPhase: 'completed',
+            progress: 100,
+            websiteId: statusResponse.result?.websiteId || prev.websiteId
           }));
           setLoading(false);
           
@@ -151,20 +257,22 @@ const ScrapingPage = () => {
             navigate('/dashboard');
           }, 3000);
           
-        } else if (statusResponse.status === 'failed' || statusResponse.status === 'error') {
-          addLog(`Scraping failed: ${statusResponse.error || 'Unknown error'}`, 'error');
+        } else if (statusResponse.status === 'failed' || statusResponse.phase === 'failed') {
+          addLog(`❌ Scraping failed: ${statusResponse.message || statusResponse.error || 'Unknown error'}`, 'error');
           setScrapeStatus(prev => ({ 
             ...prev, 
-            phase: 'error', 
-            error: statusResponse.error || 'Scraping failed'
+            phase: 'error',
+            currentPhase: 'failed',
+            error: statusResponse.message || statusResponse.error || 'Scraping failed'
           }));
           setLoading(false);
           
         } else if (attempts >= maxAttempts) {
-          addLog('Scraping timeout - taking longer than expected', 'error');
+          addLog('⏰ Scraping timeout - taking longer than expected', 'error');
           setScrapeStatus(prev => ({ 
             ...prev, 
             phase: 'error', 
+            currentPhase: 'timeout',
             error: 'Timeout - scraping is taking too long'
           }));
           setLoading(false);
@@ -175,12 +283,13 @@ const ScrapingPage = () => {
         }
       } catch (error) {
         console.error('Error checking job status:', error);
-        addLog(`Error checking progress: ${error.message}`, 'error');
+        addLog(`❌ Error checking progress: ${error.message}`, 'error');
         
         if (attempts >= 3) { // Stop after 3 consecutive errors
           setScrapeStatus(prev => ({ 
             ...prev, 
             phase: 'error', 
+            currentPhase: 'error',
             error: 'Failed to monitor scraping progress'
           }));
           setLoading(false);
@@ -215,9 +324,13 @@ const ScrapingPage = () => {
   };
 
   const getPhaseIcon = () => {
+    if (scrapeStatus.currentPhase) {
+      return getDetailedPhaseInfo().emoji;
+    }
+    
     switch (scrapeStatus.phase) {
       case 'setup': return '⚙️';
-      case 'scraping': return '🕷️';
+      case 'scraping': return '�';
       case 'completed': return '✅';
       case 'error': return '❌';
       default: return '⚙️';
@@ -225,6 +338,11 @@ const ScrapingPage = () => {
   };
 
   const getPhaseTitle = () => {
+    if (scrapeStatus.currentPhase && scrapeStatus.phase === 'scraping') {
+      const phaseInfo = getDetailedPhaseInfo();
+      return `${phaseInfo.title} - ${phaseInfo.description}`;
+    }
+    
     switch (scrapeStatus.phase) {
       case 'setup': return 'Setup Website Scraping';
       case 'scraping': return 'Scraping in Progress';
@@ -352,9 +470,17 @@ const ScrapingPage = () => {
                   <Button 
                     onClick={() => {
                       setScrapeStatus({ 
-                        phase: 'setup', jobId: null, websiteId: null, 
-                        progress: 0, pagesCrawled: 0, chunksProcessed: 0, 
-                        error: null, logs: [] 
+                        phase: 'setup', 
+                        currentPhase: null,
+                        phaseDescription: null,
+                        jobId: null, 
+                        websiteId: null, 
+                        progress: 0, 
+                        pagesCrawled: 0, 
+                        chunksProcessed: 0,
+                        totalPagesFound: 0,
+                        error: null, 
+                        logs: [] 
                       });
                       setLoading(false);
                     }}
@@ -376,28 +502,72 @@ const ScrapingPage = () => {
             <Card>
               <h3 className="text-xl font-semibold mb-4">Scraping Status</h3>
               
-              {/* Progress Bar */}
-              {scrapeStatus.phase === 'scraping' && (
+              {/* Current Phase Display */}
+              {(scrapeStatus.phase === 'scraping' || scrapeStatus.phase === 'completed') && scrapeStatus.currentPhase && (
                 <div className="mb-4">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Progress</span>
-                    <span>{scrapeStatus.progress}%</span>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{getDetailedPhaseInfo().emoji}</span>
+                      <span className="font-medium text-gray-700">{getDetailedPhaseInfo().title}</span>
+                    </div>
+                    <Badge color={getDetailedPhaseInfo().color} size="sm">
+                      {scrapeStatus.currentPhase}
+                    </Badge>
                   </div>
-                  <Progress progress={scrapeStatus.progress} color="blue" />
+                  <p className="text-sm text-gray-600 mb-3">
+                    {getDetailedPhaseInfo().description}
+                  </p>
                 </div>
               )}
 
-              {/* Statistics */}
-              {(scrapeStatus.pagesCrawled > 0 || scrapeStatus.chunksProcessed > 0) && (
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="text-center p-3 bg-blue-50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">{scrapeStatus.pagesCrawled}</div>
-                    <div className="text-sm text-blue-600">Pages</div>
+              {/* Progress Bar */}
+              {(scrapeStatus.phase === 'scraping' || scrapeStatus.phase === 'completed') && (
+                <div className="mb-4">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Progress</span>
+                    <span>{scrapeStatus.progress || 0}%</span>
                   </div>
-                  <div className="text-center p-3 bg-green-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">{scrapeStatus.chunksProcessed}</div>
-                    <div className="text-sm text-green-600">Chunks</div>
+                  <Progress 
+                    progress={scrapeStatus.progress || 0} 
+                    color="blue"
+                    className="mb-2"
+                  />
+                  {/* Progress Phase Indicator */}
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span className={(scrapeStatus.progress || 0) >= 5 ? 'text-blue-600 font-medium' : ''}>
+                      🚀 Initialize
+                    </span>
+                    <span className={(scrapeStatus.progress || 0) >= 40 ? 'text-indigo-600 font-medium' : ''}>
+                      🔍 Crawl
+                    </span>
+                    <span className={(scrapeStatus.progress || 0) >= 100 ? 'text-green-600 font-medium' : ''}>
+                      ⚙️ Process
+                    </span>
                   </div>
+                </div>
+              )}
+
+              {/* Enhanced Statistics */}
+              {(scrapeStatus.pagesCrawled > 0 || scrapeStatus.chunksProcessed > 0 || scrapeStatus.totalPagesFound > 0) && (
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  {scrapeStatus.totalPagesFound > 0 && (
+                    <div className="text-center p-2 bg-blue-50 rounded-lg">
+                      <div className="text-lg font-bold text-blue-600">{scrapeStatus.totalPagesFound}</div>
+                      <div className="text-xs text-blue-600">Found</div>
+                    </div>
+                  )}
+                  {scrapeStatus.pagesCrawled > 0 && (
+                    <div className="text-center p-2 bg-indigo-50 rounded-lg">
+                      <div className="text-lg font-bold text-indigo-600">{scrapeStatus.pagesCrawled}</div>
+                      <div className="text-xs text-indigo-600">Crawled</div>
+                    </div>
+                  )}
+                  {scrapeStatus.chunksProcessed > 0 && (
+                    <div className="text-center p-2 bg-green-50 rounded-lg">
+                      <div className="text-lg font-bold text-green-600">{scrapeStatus.chunksProcessed}</div>
+                      <div className="text-xs text-green-600">Chunks</div>
+                    </div>
+                  )}
                 </div>
               )}
 
