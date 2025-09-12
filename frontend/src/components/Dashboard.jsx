@@ -17,7 +17,9 @@ import {
   HomeIcon,
   UserCircleIcon,
   Bars3Icon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  ClipboardDocumentIcon,
+  CodeBracketIcon
 } from '@heroicons/react/24/outline';
 import { dashboardService, userService, crawlingService, widgetService } from '../utils/apiServices.js';
 import { API_BASE_URL } from '../config/api.js';
@@ -39,6 +41,12 @@ const Dashboard = () => {
   const [showAddWebsite, setShowAddWebsite] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Widget modal state
+  const [showEmbedModal, setShowEmbedModal] = useState(false);
+  const [selectedWebsite, setSelectedWebsite] = useState(null);
+  const [embedScript, setEmbedScript] = useState('');
+  const [loadingEmbed, setLoadingEmbed] = useState(false);
   
   // Add website form state
   const [newWebsite, setNewWebsite] = useState({
@@ -166,7 +174,7 @@ const Dashboard = () => {
   // Initialize dashboard
   useEffect(() => {
     if (user) {
-      loadDashboardData();
+      loadDashboardData();  
     }
   }, [user]);
 
@@ -176,6 +184,10 @@ const Dashboard = () => {
     } else if (option === 'cashflow-management') {
       alert('Cashflow & Supply Chain Analytics - Coming Soon!');
     }
+  };
+
+  const handleLogoClick = () => {
+    navigate('/');
   };
 
   const handleAddWebsite = async (e) => {
@@ -211,7 +223,7 @@ const Dashboard = () => {
 
   // Delete website handler
   const handleDeleteWebsite = async (websiteId) => {
-    if (window.confirm('Are you sure you want to delete this website?')) {
+    if (window.confirm('Are you sure you want to delete this website? This will permanently remove all crawled data and associated widgets.')) {
       try {
         const response = await fetch(`${API_BASE_URL}/user/websites/${websiteId}`, {
           method: 'DELETE',
@@ -270,6 +282,115 @@ const Dashboard = () => {
     navigate(`/website/${websiteId}`);
   };
 
+  // Handle get embed script
+  const handleGetEmbedScript = async (website) => {
+    setSelectedWebsite(website);
+    setLoadingEmbed(true);
+    setShowEmbedModal(true);
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/widget/website/${website._id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setEmbedScript(data.widget.embedCode || data.widget.scriptUrl || '');
+      } else if (response.status === 404) {
+        // Create widget if it doesn't exist
+        const createResponse = await fetch(`${API_BASE_URL}/widget/website/${website._id}/create`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        if (createResponse.ok) {
+          const createData = await createResponse.json();
+          setEmbedScript(createData.widget.embedCode || createData.widget.scriptUrl || '');
+        } else {
+          throw new Error('Failed to create widget');
+        }
+      } else {
+        throw new Error(`HTTP ${response.status}`);
+      }
+    } catch (err) {
+      console.error('Error getting embed script:', err);
+      setEmbedScript('Error loading embed script. Please try again.');
+    } finally {
+      setLoadingEmbed(false);
+    }
+  };
+
+  // Handle delete widget (actually deactivates the widget)
+  const handleDeleteWidget = async (websiteId, websiteTitle) => {
+    if (!confirm(`Are you sure you want to deactivate the widget for "${websiteTitle}"? This will disable the widget on your website.`)) {
+      return;
+    }
+
+    try {
+      // First, get the current widget configuration
+      const getResponse = await fetch(`${API_BASE_URL}/widget/website/${websiteId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (getResponse.status === 404) {
+        alert('Widget not found for this website');
+        return;
+      }
+
+      if (!getResponse.ok) {
+        throw new Error(`Failed to get widget configuration: HTTP ${getResponse.status}`);
+      }
+
+      // Update the widget to deactivate it
+      const updateResponse = await fetch(`${API_BASE_URL}/widget/website/${websiteId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          isActive: false
+        })
+      });
+
+      if (updateResponse.ok) {
+        alert('Widget deactivated successfully. The widget will no longer work on your website.');
+        // Reload dashboard data to reflect changes
+        loadDashboardData();
+      } else {
+        const errorData = await updateResponse.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${updateResponse.status}`);
+      }
+    } catch (err) {
+      console.error('Error deactivating widget:', err);
+      alert(`Error deactivating widget: ${err.message}`);
+    }
+  };
+
+  // Copy embed script to clipboard
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      alert('Embed script copied to clipboard!');
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      alert('Embed script copied to clipboard!');
+    }
+  };
+
   // Get status color for badges
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
@@ -311,7 +432,7 @@ const Dashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex-shrink-0">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3 cursor-pointer" onClick={handleLogoClick}>
                 <div className="w-8 h-8 flex items-center justify-center">
                   <LogoAnimation />
                 </div>
@@ -608,6 +729,39 @@ const Dashboard = () => {
                         <EyeIcon className="h-4 w-4 mr-1" />
                         <strong>View</strong>
                       </Button>
+                      
+                      {/* Only show widget buttons for completed websites */}
+                      {website.status === 'completed' && (
+                        <>
+                          <Button 
+                            size="sm" 
+                            color="black"
+                            onClick={() => handleGetEmbedScript(website)}
+                          >
+                            <CodeBracketIcon className="h-4 w-4 mr-1" />
+                            <strong>Embed</strong>
+                          </Button>
+                          
+                          <Button 
+                            size="sm" 
+                            color="red"
+                            onClick={() => handleDeleteWidget(website._id, website.title || website.url)}
+                          >
+                            <TrashIcon className="h-4 w-4 mr-1" />
+                            <strong>Deactivate Widget</strong>
+                          </Button>
+                        </>
+                      )}
+                      
+                      {/* Website deletion button - always available */}
+                      <Button 
+                        size="sm" 
+                        color="red"
+                        onClick={() => handleDeleteWebsite(website._id)}
+                      >
+                        <TrashIcon className="h-4 w-4 mr-1" />
+                        <strong>Delete Website</strong>
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -683,6 +837,88 @@ const Dashboard = () => {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Embed Script Modal */}
+      {showEmbedModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-black">
+                <strong>Embed Script for {selectedWebsite?.title || selectedWebsite?.url}</strong>
+              </h3>
+              <button
+                onClick={() => setShowEmbedModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <XMarkIcon className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">
+                  <strong>Embed Code</strong>
+                </label>
+                <p className="text-sm text-gray-600 mb-3">
+                  Copy and paste this code into your website's HTML to add the NEXA chatbot widget.
+                </p>
+                
+                {loadingEmbed ? (
+                  <div className="bg-gray-100 rounded-lg p-4 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black mr-3"></div>
+                    <span className="text-gray-600">Loading embed script...</span>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <textarea
+                      readOnly
+                      value={embedScript}
+                      className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm bg-gray-50 text-black resize-none focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                      placeholder="Embed script will appear here..."
+                    />
+                    <button
+                      onClick={() => copyToClipboard(embedScript)}
+                      className="absolute top-2 right-2 p-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+                      disabled={!embedScript || embedScript.includes('Error')}
+                    >
+                      <ClipboardDocumentIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="font-medium text-blue-900 mb-2">
+                  <strong>Integration Instructions</strong>
+                </h4>
+                <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                  <li>Copy the embed code above</li>
+                  <li>Paste it into your website's HTML, preferably before the closing &lt;/body&gt; tag</li>
+                  <li>The widget will automatically appear on your website</li>
+                  <li>Customize the widget appearance in the widget settings</li>
+                </ol>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={() => copyToClipboard(embedScript)}
+                  className="flex-1"
+                  disabled={!embedScript || embedScript.includes('Error')}
+                >
+                  <ClipboardDocumentIcon className="h-4 w-4 mr-2" />
+                  <strong>Copy to Clipboard</strong>
+                </Button>
+                <Button
+                  onClick={() => setShowEmbedModal(false)}
+                  color="gray"
+                >
+                  <strong>Close</strong>
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}

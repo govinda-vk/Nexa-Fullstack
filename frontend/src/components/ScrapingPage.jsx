@@ -56,7 +56,7 @@ const ScrapingPage = () => {
   // Performance Analytics Card Component (adapted to black/white theme)
   const PerformanceAnalyticsCard = () => {
     return (
-      <div className="group relative flex w-full flex-col rounded-xl bg-black p-4 shadow-2xl transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
+      <div className="group relative flex w-full flex-col rounded-xl bg-black p-4 shadow-2xl transition-all">
         <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-gray-400 via-gray-600 to-gray-800 opacity-20 blur-sm transition-opacity duration-300 group-hover:opacity-30"></div>
         <div className="absolute inset-px rounded-[11px] bg-black"></div>
 

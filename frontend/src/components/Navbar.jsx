@@ -28,12 +28,13 @@ const Navbar = () => {
     setIsMenuOpen(false);
   };
 
-  const handleNavClick = (section) => {
-    // If we're not on the home page, navigate there first
-    if (location.pathname !== '/') {
-      navigate('/');
-    }
-    // You can add scroll behavior here if needed
+  const handleNavClick = (path) => {
+    navigate(path);
+    setIsMenuOpen(false);
+  };
+
+  const handleLogoClick = () => {
+    navigate('/');
     setIsMenuOpen(false);
   };
 
@@ -43,7 +44,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
 
-          <div className="flex-shrink-0 flex items-center">
+          <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={handleLogoClick}>
             <span className="text-black text-2xl font-bold tracking-tight mr-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
               NEXA
             </span>
@@ -55,30 +56,30 @@ const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-6">
-              <a
-                href="#"
+              <button
+                onClick={() => handleNavClick('/about')}
                 className="text-black hover:text-black px-3 py-2 rounded-md text-sm font-medium transition duration-150"
               >
-                AboutUs
-              </a>
-              <a
-                href="#"
+                About Us
+              </button>
+              <button
+                onClick={() => handleNavClick('/contact')}
                 className="text-black hover:text-black px-3 py-2 rounded-md text-sm font-medium transition duration-150"
               >
-                ContactUs
-              </a>
-              <a
-                href="#"
+                Contact Us
+              </button>
+              <button
+                onClick={() => handleNavClick('/pricing')}
                 className="text-black hover:text-black px-3 py-2 rounded-md text-sm font-medium transition duration-150"
               >
                 Pricing
-              </a>
-              <a
-                href="#"
+              </button>
+              <button
+                onClick={() => handleNavClick('/embed-guide')}
                 className="text-black hover:text-black px-3 py-2 rounded-md text-sm font-medium transition duration-150"
               >
-                EmbedGuide
-              </a>
+                Embed Guide
+              </button>
             </div>
           </div>
 
@@ -160,30 +161,30 @@ const Navbar = () => {
       {isMenuOpen && (
         <div className="md:hidden bg-indigo-800">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <a
-              href="#"
-              className="text-black hover:text-black block px-3 py-2 rounded-md text-base font-medium"
+            <button
+              onClick={() => handleNavClick('/about')}
+              className="w-full text-left text-black hover:text-black block px-3 py-2 rounded-md text-base font-medium"
             >
-              AboutUs
-            </a>
-            <a
-              href="#"
-              className="text-black hover:text-black block px-3 py-2 rounded-md text-base font-medium"
+              About Us
+            </button>
+            <button
+              onClick={() => handleNavClick('/contact')}
+              className="w-full text-left text-black hover:text-black block px-3 py-2 rounded-md text-base font-medium"
             >
-              ContactUs
-            </a>
-            <a
-              href="#"
-              className="text-black hover:text-black block px-3 py-2 rounded-md text-base font-medium"
+              Contact Us
+            </button>
+            <button
+              onClick={() => handleNavClick('/pricing')}
+              className="w-full text-left text-black hover:text-black block px-3 py-2 rounded-md text-base font-medium"
             >
               Pricing
-            </a>
-            <a
-              href="#"
-              className="text-black hover:text-black block px-3 py-2 rounded-md text-base font-medium"
+            </button>
+            <button
+              onClick={() => handleNavClick('/embed-guide')}
+              className="w-full text-left text-black hover:text-black block px-3 py-2 rounded-md text-base font-medium"
             >
-              EmbedGuide
-            </a>
+              Embed Guide
+            </button>
             <div className="pt-4 pb-3 border-t border-indigo-700">
               {isAuthenticated ? (
                 <>

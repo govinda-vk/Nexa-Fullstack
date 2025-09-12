@@ -113,11 +113,26 @@ const ChartCard = ({ viz, className = "" }) => {
             if (label) {
               label += ': ';
             }
-            if (context.parsed.y !== null) {
+            
+            // Handle pie/doughnut charts differently
+            if (viz.chartType === "pie" || viz.chartType === "doughnut") {
+              const value = context.parsed;
+              const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+              const percentage = ((value / total) * 100).toFixed(1);
+              
               label += new Intl.NumberFormat('en-US', {
                 style: 'currency',
                 currency: 'USD'
-              }).format(context.parsed.y);
+              }).format(value);
+              label += ` (${percentage}%)`;
+            } else {
+              // Handle other chart types (bar, line)
+              if (context.parsed.y !== null) {
+                label += new Intl.NumberFormat('en-US', {
+                  style: 'currency',
+                  currency: 'USD'
+                }).format(context.parsed.y);
+              }
             }
             return label;
           }

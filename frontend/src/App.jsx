@@ -13,6 +13,10 @@ import WidgetConfig from "./components/WidgetConfig";
 import ScrapingPage from "./components/ScrapingPage";
 import UploadForm from './components/uploadForm.jsx';
 import CashflowPage from './components/cashFlowPage.jsx';
+import Pricing from './components/Pricing.jsx';
+import AboutUs from './components/AboutUs.jsx';
+import ContactUs from './components/ContactUs.jsx';
+import EmbedGuide from './components/EmbedGuide.jsx';
 
 function AppContent() {
   const location = useLocation();
@@ -62,6 +66,15 @@ function AppContent() {
             <WidgetConfig />
           </ProtectedRoute>
         } />
+        <Route path="/cashflow" element={
+          <ProtectedRoute>
+            <CashflowPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/about" element={<AboutUs />} />
+        <Route path="/contact" element={<ContactUs />} />
+        <Route path="/embed-guide" element={<EmbedGuide />} />
       </Routes>
     </div>
   );
@@ -73,9 +86,6 @@ function App() {
       <AuthProvider>
         <Router>
           <AppContent />
-            <Routes>
-             < Route path="/cashflow" element={<CashflowPage/>} />
-            </Routes>
         </Router>
       </AuthProvider>
     </ErrorBoundary>
