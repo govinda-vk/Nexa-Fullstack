@@ -9,20 +9,20 @@ export default function LandingPage() {
         <div className="flex flex-col items-center">
           <div className="bg-limelemon w-[430px] h-[370px] p-6 rounded-2xl shadow-lg flex flex-col items-center justify-center text-center space-y-4">
 
-            <div className="flex w-[370px] h-[80px] bg-white rounded-lg items-center px-3">
+            <div className="flex w-[350px] h-[80px] gap-2 bg-white rounded-lg items-center px-3">
              <input
               type="text"
                disabled
               placeholder="www.yourwebsite.com"
               className="w-full p-2 rounded-lg text-black bg-white"
             />
-            <button className="bg-black text-white px-3 py-1 rounded-lg w-[190px] h-[50px]">
+            <button className="bg-black text-white px-3 py-1 rounded-lg w-[185px] h-[45px]">
               Add Address
             </button>
             </div>
             
           </div>
-          <div className="mt-6 ms-5 text-start space-y-3 max-w-[500px]">
+          <div className="mt-6 ms-9 text-start  space-y-3 max-w-[500px]">
             <h2 className="text-2xl font-bold">Step 1: Get your embed code</h2>
             <p className="text-start text-xl font-thin w-[85%]">
               Enter your website address. We’ll analyze your site and generate an
@@ -47,7 +47,7 @@ export default function LandingPage() {
               </span>
             </div>
           </div>
-          <div className="mt-6 me-10 text-start space-y-3 max-w-[500px]">
+          <div className="mt-6 ms-9 text-start space-y-3 max-w-[500px]">
             <h2 className="text-2xl font-bold ">Step 2: Add chatbot to your site</h2>
             <p className="text-start text-xl  font-thin w-[90%]" >Grab your embed code and drop it into your site. That’s all NEXA needs to get to work.</p>
           </div>
@@ -56,17 +56,17 @@ export default function LandingPage() {
         {/* Step 3 */}
         <div className="flex flex-col items-center">
           <div className="bg-lemon w-[430px] h-[370px] p-6 rounded-2xl shadow-lg flex flex-col items-center justify-center text-center space-y-6">
-            <div className="bg-black p-3 rounded-lg text-white w-full">
-              <p>You have a new conversation!</p>
+            <div className="bg-black p-2 rounded-lg text-black   px-4 flex  w-full">
+              <p className="text-white mt-3 mb-4">You have a new conversation!</p>
               <input
                 type="text"
                  disabled
                 placeholder="Ask NEXA AI..."
-                className="w-full p-2 rounded-lg mt-2 border"
+                className="w-full p-2 rounded-lg mt-3 mb-3 border"
               />
             </div>
           </div>
-          <div className="mt-6 ms-2 space-y-3 max-w-[500px]">
+          <div className="mt-6 ms-10 space-y-3 max-w-[500px]">
             <h2 className="text-2xl font-bold text-start">Step 3: Go live in minutes — it’s free!</h2>
             <p className="text-start text-xl  font-thin w-[80%] ">
               NEXA will chat with your site visitors and send conversations to your mailbox.
